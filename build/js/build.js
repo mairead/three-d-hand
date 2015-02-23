@@ -93,11 +93,19 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 
 		var deviceQuat = new THREE.Quaternion();
 		var alpha, beta, gamma, orient;
-		// var prevAlpha = 0;
 
 		return function () {
 
-			alpha  = THREE.Math.degToRad( this.deviceOrientation.alpha || 0 ); // Z
+			//alpha hack forces the values into the middle of the 360 degrees of rotation to 
+			//prevent the kalman filter skewing when it hits the 0-360 gap
+			alpha = this.deviceOrientation.alpha;
+			if(alpha > 270){
+				alpha = alpha - 180;
+			}else if (alpha < 90){
+				alpha = alpha + 180;
+			}
+
+			alpha  = THREE.Math.degToRad( alpha || 0 ); // Z
 			beta   = THREE.Math.degToRad( this.deviceOrientation.beta  || 0 ); // X'
 			gamma  = THREE.Math.degToRad( this.deviceOrientation.gamma || 0 ); // Y''
 			orient = THREE.Math.degToRad( this.screenOrientation       || 0 ); // O
@@ -107,12 +115,6 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 			// only process non-zero 3-axis data
 			if ( alpha !== 0 && beta !== 0 && gamma !== 0) {
 
-				// var diff = prevAlpha - alpha;
-	   //  	if(diff >1 || diff < -1){
-	   //  		diff = "CHANGE";
-	   //  	}
-	   //  	outputDebugging.showFlip(prevAlpha, alpha, diff);
-				
 				kalmanObjects.KO.z_k = $V([alpha, beta, gamma]); 
 	    	kalmanObjects.KM.update(kalmanObjects.KO);
 	    	outputDebugging.kalmanOutput(kalmanObjects.KM.x_k.elements);
@@ -128,7 +130,6 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 					return;
 				}
 				this.object.quaternion.copy( deviceQuat );
-				// prevAlpha = alpha;
 			}
 
 		};
@@ -356,9 +357,9 @@ exports.createStage = function(viewport, view){
 	material = new THREE.MeshNormalMaterial( );
 	torus = new THREE.Mesh( geometry, material );
 	
-	// torus.position.set(2, 3, 0); 
 	torus.position.set(100, 3, 0); 
-	//moved from (2,2,0) to position items behind camera
+	//moved from (2,2,0) to position items behind camera. This is a hack 
+	//combined with the alpha position to prevent the kalman filter breaking
 	torus.rotation.y += 90;
 	scene.add( torus );
 
