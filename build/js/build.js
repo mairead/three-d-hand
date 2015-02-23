@@ -261,9 +261,7 @@ exports.showOrientation = function(orientation){
 	$(".debugger").html("orientation:" + orientation);
 };
 
-
 exports.showAccelerometer = function(){
-
 	function getDeviceRotation(e){
 		$(".originals").html('ORIG beta: ' + e.beta.toFixed(6) + ", alpha: " + e.alpha.toFixed(6) + ", gamma: " + e.gamma.toFixed(6));
 		
@@ -280,8 +278,6 @@ exports.showAccelerometer = function(){
 	}else{
 	  $(".accelerometer").html("NOT SUPPORTED");
 	}
-
-
 };
 
 
