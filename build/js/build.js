@@ -202,7 +202,7 @@ render();
 
 exports.kalmanFilter = function(){
 
-  var x_0 = $V([1.5,0,0]); //vector. Initial accelerometer values.
+  var x_0 = $V([0,0,0]); //vector. Initial accelerometer values.
   //These are the base values when the device is held up straight
 
   //P prior knowledge of state
@@ -224,11 +224,7 @@ exports.kalmanFilter = function(){
 
   var KM = new KalmanModel(x_0,P_0,F_k,Q_k);
 
-  //passed in as beta, gamma, alpha
-  //alpha control is the most problematic because of 360 flip bug
-  //but doesn't necessarily require more correction
-
-  var z_k = $V([1.5,0,0]); //Updated accelerometer values. Is this amount to correct in each pass? 
+  var z_k = $V([0,0,0]); //Updated accelerometer values. Is this amount to correct in each pass? 
   //var z_k = $V([0,0,0]);
   var H_k = $M([
                 [1,0,0],
@@ -236,9 +232,9 @@ exports.kalmanFilter = function(){
                 [0,0,1]
               ]); //identity matrix. Describes relationship between model and observation
   var R_k = $M([
-                [0.25,0,0],
-                [0,0.25,0],
-                [0,0,0.25]
+                [0.5,0,0],
+                [0,0.5,0],
+                [0,0,0.5]
               ]); //2x Scalar matrix. Describes noise from sensor. Set to 2 to begin
   var KO = new KalmanObservation(z_k,H_k,R_k);
 
@@ -251,7 +247,7 @@ exports.kalmanFilter = function(){
 "use strict";
 
 exports.kalmanOutput = function(kalman){
-	$(".kalman").html("KAL: beta: " +kalman[1].toFixed(6)+", alpha: " +kalman[0].toFixed(6) + ", gamma: " +kalman[2].toFixed(6));
+	//$(".kalman").html("KAL: beta: " +kalman[1].toFixed(6)+", alpha: " +kalman[0].toFixed(6) + ", gamma: " +kalman[2].toFixed(6));
 };
 
 exports.showFlip = function(prevAlpha, currAlpha, diff){
@@ -264,14 +260,14 @@ exports.showOrientation = function(orientation){
 
 exports.showAccelerometer = function(){
 	function getDeviceRotation(e){
-		$(".originals").html('ORIG beta: ' + e.beta.toFixed(6) + ", alpha: " + e.alpha.toFixed(6) + ", gamma: " + e.gamma.toFixed(6));
+		//$(".originals").html('ORIG beta: ' + e.beta.toFixed(6) + ", alpha: " + e.alpha.toFixed(6) + ", gamma: " + e.gamma.toFixed(6));
 		
 		var alpha = THREE.Math.degToRad(e.alpha).toFixed(6); 
 		var beta = THREE.Math.degToRad(e.beta).toFixed(6);
 		var gamma = THREE.Math.degToRad(e.gamma).toFixed(6);
 	
 		//why aren't these values updating any more? :(
-		$(".accelerometer").html('RADI beta: ' + beta + ", alpha: " + alpha + ", gamma: " + gamma);
+		//$(".accelerometer").html('RADI beta: ' + beta + ", alpha: " + alpha + ", gamma: " + gamma);
 	}
 
 	if (window.DeviceOrientationEvent) {

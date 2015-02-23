@@ -2,7 +2,7 @@
 
 exports.kalmanFilter = function(){
 
-  var x_0 = $V([1.5,0,0]); //vector. Initial accelerometer values.
+  var x_0 = $V([0,0,0]); //vector. Initial accelerometer values.
   //These are the base values when the device is held up straight
 
   //P prior knowledge of state
@@ -24,11 +24,7 @@ exports.kalmanFilter = function(){
 
   var KM = new KalmanModel(x_0,P_0,F_k,Q_k);
 
-  //passed in as beta, gamma, alpha
-  //alpha control is the most problematic because of 360 flip bug
-  //but doesn't necessarily require more correction
-
-  var z_k = $V([1.5,0,0]); //Updated accelerometer values. Is this amount to correct in each pass? 
+  var z_k = $V([0,0,0]); //Updated accelerometer values. Is this amount to correct in each pass? 
   //var z_k = $V([0,0,0]);
   var H_k = $M([
                 [1,0,0],
@@ -36,9 +32,9 @@ exports.kalmanFilter = function(){
                 [0,0,1]
               ]); //identity matrix. Describes relationship between model and observation
   var R_k = $M([
-                [0.25,0,0],
-                [0,0.25,0],
-                [0,0,0.25]
+                [0.5,0,0],
+                [0,0.5,0],
+                [0,0,0.5]
               ]); //2x Scalar matrix. Describes noise from sensor. Set to 2 to begin
   var KO = new KalmanObservation(z_k,H_k,R_k);
 
