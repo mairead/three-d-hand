@@ -10,8 +10,8 @@ module.exports = function(config) {
         '*.spec.js'
     ],
 
-    autoWatch : false,
-    singleRun: true,
+    // autoWatch : false,
+    // singleRun: true,
 
     frameworks: ['browserify','jasmine'],
     

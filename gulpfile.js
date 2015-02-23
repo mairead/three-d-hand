@@ -20,6 +20,7 @@ var watchify = require('watchify');
 var browserify = require('browserify');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
+var concat = require('gulp-concat-sourcemap');
 // image optimization
 var imagemin = require('gulp-imagemin');
 // linting
@@ -40,14 +41,15 @@ var watch = argv._.length ? argv._[0] === 'watch' : true;
 // ----------------------------
 
 var handleError = function(task) {
+  //console.log('error called',task)//not sure why error handler is called?
   return function(err) {
-    
-      notify.onError({
-        message: task + ' failed, check the logs..',
-        sound: false
-      })(err);
+    notify.onError({
+      message: task + ' failed, check the logs..',
+      sound: false
+    })(err);
     
     gutil.log(gutil.colors.bgRed(task + ' error:'), gutil.colors.red(err));
+
   };
 };
 // --------------------------
@@ -107,6 +109,14 @@ var tasks = {
       .pipe(gulp.dest('build/css'));
   },
   // --------------------------
+  // Libs
+  // --------------------------
+  libs: function() {
+    gulp.src('./src/js/vendor/*.js')
+      .pipe(concat('libs.js'))
+      .pipe(gulp.dest('build/js/'));
+  },
+  // --------------------------
   // Browserify
   // --------------------------
   browserify: function() {
@@ -121,12 +131,14 @@ var tasks = {
       bundler = watchify(bundler);
     }
     var rebundle = function() {
+      tasks.lintjs();
       return bundler.bundle()
-        .on('error', handleError('Browserify'))
+        .on('error', handleError('browserify'))
         .pipe(source('build.js'))
         .pipe(gulpif(production, buffer()))
         .pipe(gulpif(production, uglify()))
-        .pipe(gulp.dest('build/js/'));
+        .pipe(gulp.dest('build/js/'))
+        .pipe(browserSync.reload({stream:true}));
     };
     bundler.on('update', rebundle);
     return rebundle();
@@ -138,8 +150,10 @@ var tasks = {
     return gulp.src([
         // 'gulpfile.js', //the unused vars in the build flags throw lint errors
         './src/js/app.js',
+        './src/js/*.js',
         './src/js/**/*.js',
-        './tests/**/*.js'
+        './tests/**/*.js',
+        '!./src/js/vendor/*.js'
       ]).pipe(jshint())
       .pipe(jshint.reporter(stylish))
       .on('error', handleError('lint'));
@@ -184,9 +198,10 @@ gulp.task('browser-sync', function() {
 gulp.task('reload-sass', ['sass'], function(){
   browserSync.reload();
 });
-gulp.task('reload-js', ['browserify'], function(){
-  browserSync.reload();
-});
+// gulp.task('reload-js', ['browserify'], function(){
+//   console.log('reloading javascript')
+//   // browserSync.reload();
+// });
 gulp.task('reload-templates', ['templates'], function(){
   browserSync.reload();
 });
@@ -201,6 +216,7 @@ var req = build ? ['clean'] : [];
 gulp.task('templates', req, tasks.templates);
 gulp.task('assets', req, tasks.assets);
 gulp.task('sass', req, tasks.sass);
+gulp.task('libs', tasks.libs);
 gulp.task('browserify', req, tasks.browserify);
 gulp.task('lint:js', tasks.lintjs);
 gulp.task('optimize', tasks.optimize);
@@ -209,8 +225,7 @@ gulp.task('test', tasks.test);
 // --------------------------
 // DEV/WATCH TASK
 // --------------------------
-gulp.task('watch', ['assets', 'templates', 'sass', 'browserify', 'browser-sync'], function() {
- 
+gulp.task('watch', ['assets', 'templates', 'sass', 'libs', 'browserify', 'browser-sync'], function() {
   // --------------------------
   // watch:sass
   // --------------------------
@@ -219,8 +234,8 @@ gulp.task('watch', ['assets', 'templates', 'sass', 'browserify', 'browser-sync']
   // --------------------------
   // watch:js
   // --------------------------
-  gulp.watch('./src/js/**/*.js', ['lint:js', 'test', 'reload-js']);
-
+  // gulp.watch('./src/js/**/*.js', ['lint:js', 'reload-js']);
+  // gulp.watch('./src/js/*.js', ['lint:js',  'reload-js']);
   // --------------------------
   // watch:html
   // --------------------------
@@ -229,8 +244,9 @@ gulp.task('watch', ['assets', 'templates', 'sass', 'browserify', 'browser-sync']
   // --------------------------
   // watch:tests
   // --------------------------
-  gulp.watch('./tests/**/*.js', ['lint:js', 'test']);
+  // gulp.watch('./tests/**/*.js', ['lint:js', 'test', 'reload-js']);
 
+  //this isn't coming back on
  
   gutil.log(gutil.colors.bgGreen('Watching for changes...'));
 });
@@ -241,6 +257,7 @@ gulp.task('build', [
   'templates',
   'assets',
   'sass',
+  'libs',
   'browserify'
 ]);
  

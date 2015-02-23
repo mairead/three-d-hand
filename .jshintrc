@@ -31,6 +31,12 @@
     "before" : false,
     "beforeEach" : false,
     "after" : false,
-    "afterEach" : false
+    "afterEach" : false,
+    "KalmanModel": true,
+    "KalmanObservation": true,
+    "$M": true,
+    "$V": true,
+    "$": true,
+    "THREE": true
   }
 }
