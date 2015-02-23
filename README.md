@@ -4,4 +4,5 @@ Includes Gulp config, Browserify, Watchify, Sass compilation with autoprefixer, 
 
 Three.js cardboard app with Kalman filter
 
+Browserified cardboard app with three.js and kalman filter
 
