@@ -29,6 +29,15 @@ function render() {
 
 render();
 
+// define connection settings
+var leap = new Leap.Controller({
+  host: '0.0.0.0',
+  port: 6437
+});
+
+// connect controller
+leap.connect();
+
 
 
 
