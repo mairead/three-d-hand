@@ -72,6 +72,7 @@ exports.createStage = function(viewport, view){
 	torus = new THREE.Mesh( geometry, material );
 	
 	torus.position.set(100, 3, 0); 
+	//torus.position.set(2, 2, 0); 
 	//moved from (2,2,0) to position items behind camera. This is a hack 
 	//combined with the alpha position to prevent the kalman filter breaking
 	torus.rotation.y += 90;

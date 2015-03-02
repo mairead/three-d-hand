@@ -1,9 +1,5 @@
 'use strict';
 
-exports.createHand2 = function(){}
-
-exports.createHand = function(){ //set id for fingers once and assign bones
-	
 	var fingers = [
 	  {id: 0, pointable: {}}, //middle
 	  {id: 0, pointable: {}}, //ring
@@ -14,6 +10,8 @@ exports.createHand = function(){ //set id for fingers once and assign bones
 
 	var hand;
 
+exports.createHand = function(){ //set id for fingers once and assign bones
+	
 	//Instantiate new Mesh object by loading Blender JSON export
 	var loader = new THREE.JSONLoader();
 
@@ -56,14 +54,17 @@ exports.createHand = function(){ //set id for fingers once and assign bones
 	  fingers[4].mainBone = hand.bones[2];
 	  fingers[4].phalanges = [hand.bones[3]];
 
-
-
-	  //need a call back for this async event to return the finished hand rig
 	});
-
+	
 	return {
-		fingers: fingers,
-		hand: hand
+		handRigLoader: loader
 	};
 
 };
+
+exports.getHand = function(){
+	return {
+		handMesh: hand,
+	  fingers: fingers
+	};
+}
