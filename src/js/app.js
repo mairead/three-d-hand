@@ -31,8 +31,10 @@ var loadHandRigging = new Promise(function(resolve, reject){
 loadHandRigging.then(function(result) {
 
   handRig = hand.getHand();
-  handRig.handMesh.position.set(2, 2, 0);
+  handRig.handMesh.position = new THREE.Vector3( 5, 0, 0 );
+  // handRig.handMesh.bones[0].rotation.set({x:0, y:0, z:0});
 
+  console.log(handRig.handMesh.position)
 
   stageLeft.scene.add(handRig);
   stageRight.scene.add(handRig);
