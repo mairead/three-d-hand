@@ -1,64 +1,69 @@
-//set id for fingers once and assign bones
-var fingers1 = [
-  {id: 0, pointable: {}}, //middle
-  {id: 0, pointable: {}}, //ring
-  {id: 0, pointable: {}}, //index
-  {id: 0, pointable: {}}, //little
-  {id: 0, pointable: {}} //thumb
-];
-var fingersAssigned = false; //flag to determine if all fingers have been detected and assigned an ID
+'use strict';
 
-var hand1;
+exports.createHand2 = function(){}
 
-//Instantiate new Mesh object by loading Blender JSON export
-var loader1 = new THREE.JSONLoader();
+exports.createHand = function(){ //set id for fingers once and assign bones
+	
+	var fingers = [
+	  {id: 0, pointable: {}}, //middle
+	  {id: 0, pointable: {}}, //ring
+	  {id: 0, pointable: {}}, //index
+	  {id: 0, pointable: {}}, //little
+	  {id: 0, pointable: {}} //thumb
+	];
 
-//load Hand model with ThreeJS Loader
-loader1.load('javascripts/riggedhand.js', function (geometry, materials) {
-  var material;
+	var hand;
 
-  hand1 = new THREE.SkinnedMesh(
-    geometry,
-    new THREE.MeshFaceMaterial(materials)
-  );
+	//Instantiate new Mesh object by loading Blender JSON export
+	var loader = new THREE.JSONLoader();
 
-  material = hand1.material.materials;
+	//load Hand model with ThreeJS Loader
+	loader.load('js/rigging.json', function (geometry, materials) {
+	  var material;
 
-  for (var i = 0; i < materials.length; i++) {
-    var mat = materials[i];
+	  hand = new THREE.SkinnedMesh(
+	    geometry,
+	    new THREE.MeshFaceMaterial(materials)
+	  );
 
-    mat.skinning = true;
-  }
+	  material = hand.material.materials;
 
-  //add bones from Hand into fingers array
+	  for (var i = 0; i < materials.length; i++) {
+	    var mat = materials[i];
 
-  //middle
-  fingers1[0].mainBone = hand1.bones[9];
-  fingers1[0].phalanges = [hand1.bones[10], hand1.bones[11]];
+	    mat.skinning = true;
+	  }
 
-  //ring
-  fingers1[1].mainBone = hand1.bones[5];
-  fingers1[1].phalanges = [hand1.bones[6], hand1.bones[7]];
+	  //add bones from Hand into fingers array
 
-  //index
-  fingers1[2].mainBone = hand1.bones[13];
-  fingers1[2].phalanges = [hand1.bones[14], hand1.bones[15]];
+	  //middle
+	  fingers[0].mainBone = hand.bones[9];
+	  fingers[0].phalanges = [hand.bones[10], hand.bones[11]];
 
-  //little
-  fingers1[3].mainBone = hand1.bones[17];
-  fingers1[3].phalanges = [hand1.bones[18], hand1.bones[19]];
+	  //ring
+	  fingers[1].mainBone = hand.bones[5];
+	  fingers[1].phalanges = [hand.bones[6], hand.bones[7]];
 
-  //thumb
-  fingers1[4].mainBone = hand1.bones[2];
-  fingers1[4].phalanges = [hand1.bones[3]];
+	  //index
+	  fingers[2].mainBone = hand.bones[13];
+	  fingers[2].phalanges = [hand.bones[14], hand.bones[15]];
 
-  scene1.add(hand1);
+	  //little
+	  fingers[3].mainBone = hand.bones[17];
+	  fingers[3].phalanges = [hand.bones[18], hand.bones[19]];
 
-  render();
+	  //thumb
+	  fingers[4].mainBone = hand.bones[2];
+	  fingers[4].phalanges = [hand.bones[3]];
 
 
-  // Init Leap 
-  Leap.loop(function (frame) {
-    animate(frame, hand1); // pass frame and hand model
-  });
-});
+
+	  //need a call back for this async event to return the finished hand rig
+	});
+
+	return {
+		fingers: fingers,
+		hand: hand
+	};
+
+};

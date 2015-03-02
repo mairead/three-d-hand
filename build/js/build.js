@@ -40,8 +40,6 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 		ROTATE_CONTROL:     'rotate'         // rotatestart, rotateend
 	};
 
-	
-
 	var fireEvent = function () {
 		var eventData;
 
@@ -158,13 +156,118 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 };
 
 
-},{"./kalmanFilter.js":3,"./outputDebugging.js":4}],2:[function(require,module,exports){
+},{"./kalmanFilter.js":5,"./outputDebugging.js":7}],2:[function(require,module,exports){
+'use strict';
+
+var leapBox = require('./leapBox.js');
+
+//animate is called after the Hand model has been loaded by ThreeJs
+//This is recalled with each Leap frame receieved with the Leap.loop
+//This contains all the positioning code for moving the Hand mesh around
+exports.animate = function(frame, handMesh, fingers){
+  var fingersAssigned = false; //flag to determine if all fingers have been detected and assigned an ID
+
+
+  function rotationCtrl(dir){
+      // make sure fingers won't go into weird position. T
+      //I think this doctors the direction object for each rotation to prevent large shifts
+        for (var i = 0, length = dir.length; i < length; i++) {
+          if (dir[i] >= 0.8) {
+            dir[i] = 0.8;
+          }
+          
+        }
+      return dir;
+    }
+        
+    function rotateBones(finger){
+      //treat direction value before applying rotation
+      var fingerDir = rotationCtrl(finger.pointable.direction);
+
+      //TODO: Need to add more fine tuning to Direction constraint to prevent them bending backwards but without limiting forward or side movement
+
+      //var fingerDir = finger.pointable.direction;
+
+      // apply rotation to the main bone
+      finger.mainBone.rotation.set(0, -fingerDir[0], fingerDir[1]); 
+
+      // apply rotation to phalanx bones
+      for (var i = 0, length = finger.phalanges.length; i < length; i++) {
+        var phalange = finger.phalanges[i];
+        phalange.rotation.set(0, 0, fingerDir[1]);
+      }
+    }
+
+  if (frame.hands.length > 0) {
+
+    //set IDs at beginning for fingers
+    if(!fingersAssigned){
+      //if all 5 pointables are available
+      if (frame.pointables.length === 5) {
+        //assign the current ID to the fingers array
+        for (var i = frame.pointables.length - 1; i >= 0; i--) {
+          fingers[i].id = frame.pointables[i].id;
+          //console.log("ASSIGNED ID: ", fingers[i].id)
+        }
+        fingersAssigned = true; //set flag to prevent IDs being reassigned
+      }
+    }
+
+    //Setting palm position and rotation to position of hand mesh on screen
+    var hand = frame.hands[0];
+
+    var position = leapBox.leapToScene( frame , hand.palmPosition );//ensures hand appears within Leap Js interaction box
+    handMesh.position = position; // apply position
+
+    var rotation = {
+      z: hand.pitch(),
+      y: hand.yaw(),
+      x: hand.roll()
+    };
+
+    //Rotate the main bone of the hand and palm around the hand rotation
+    handMesh.bones[0].rotation.set(rotation.x, rotation.y, rotation.z); //pitch is in reverse. The user's position is in the negative z axis
+
+    //For each finger in the hand set the rotation of the main finger bone, and the smaller phalanx bones
+
+    for (var k = fingers.length - 1; k >= 0; k--) {
+      //console.log("FINGER ID: ", fingers[i].id)
+
+      fingers[k].fingerVisible = false;
+    
+      for (var j = frame.pointables.length - 1; j >= 0; j--) {
+         //console.log("POINTABLE ID: ", frame.pointables[j].id)
+         if (fingers[k].id === frame.pointables[j].id) {
+          //console.log("FINGER FOUND");
+          fingers[k].fingerVisible = true; //finger ID has been found and therefore the finger is visible
+          //push current pointable item into fingers array
+          fingers[k].pointable = frame.pointables[j];
+          rotateBones(fingers[k]);
+        }
+      }
+    }
+
+    
+
+      //Update finger rotation
+      // for (var i = fingers.length - 1; i >= 0; i--) {
+      //   rotateBones(fingers[i]);
+      // };
+    //}
+
+  }
+};
+},{"./leapBox.js":6}],3:[function(require,module,exports){
 'use strict';
 
 var threeDStage = require('./threeDStage.js');
 var orientationController = require('./DeviceOrientationController.js');
-var ctrl = orientationController.DeviceOrientationController;
+var hand = require('./hand.js');
+var animateHand = require('./animateHand.js');
 
+var ctrl = orientationController.DeviceOrientationController;
+var handLeft = hand.createHand();
+var handRight = hand.createHand();
 var stageLeft = threeDStage.createStage('.viewport-1', 'left');
 var stageRight = threeDStage.createStage('.viewport-2', 'right');
 
@@ -176,7 +279,10 @@ stageLeft.controls.connect();
 stageRight.controls = new ctrl( stageRight.camera, stageRight.renderer.domElement );
 stageRight.controls.connect();
 
-// Render loop
+stageLeft.scene.add(handLeft);
+stageRight.scene.add(handRight);
+
+// Render loop runs stage updating and view to cardboard
 function render() {
 	stageLeft.controls.update();
 	stageRight.controls.update();
@@ -199,6 +305,11 @@ var leap = new Leap.Controller({
 // connect controller
 leap.connect();
 
+// Init Leap loop, runs the animation of the ThreeD hand from the Leap input
+Leap.loop(function (frame) {
+  animateHand.animate(frame, handLeft.hand, handLeft.fingers); // pass frame and hand model
+  animateHand.animate(frame, handRight.hand, handRight.fing);
+});
 
 
 
@@ -206,7 +317,79 @@ leap.connect();
 
 
 
-},{"./DeviceOrientationController.js":1,"./threeDStage.js":5}],3:[function(require,module,exports){
+
+
+},{"./DeviceOrientationController.js":1,"./animateHand.js":2,"./hand.js":4,"./threeDStage.js":8}],4:[function(require,module,exports){
+'use strict';
+
+exports.createHand2 = function(){}
+
+exports.createHand = function(){ //set id for fingers once and assign bones
+	
+	var fingers = [
+	  {id: 0, pointable: {}}, //middle
+	  {id: 0, pointable: {}}, //ring
+	  {id: 0, pointable: {}}, //index
+	  {id: 0, pointable: {}}, //little
+	  {id: 0, pointable: {}} //thumb
+	];
+
+	var hand;
+
+	//Instantiate new Mesh object by loading Blender JSON export
+	var loader = new THREE.JSONLoader();
+
+	//load Hand model with ThreeJS Loader
+	loader.load('js/rigging.json', function (geometry, materials) {
+	  var material;
+
+	  hand = new THREE.SkinnedMesh(
+	    geometry,
+	    new THREE.MeshFaceMaterial(materials)
+	  );
+
+	  material = hand.material.materials;
+
+	  for (var i = 0; i < materials.length; i++) {
+	    var mat = materials[i];
+
+	    mat.skinning = true;
+	  }
+
+	  //add bones from Hand into fingers array
+
+	  //middle
+	  fingers[0].mainBone = hand.bones[9];
+	  fingers[0].phalanges = [hand.bones[10], hand.bones[11]];
+
+	  //ring
+	  fingers[1].mainBone = hand.bones[5];
+	  fingers[1].phalanges = [hand.bones[6], hand.bones[7]];
+
+	  //index
+	  fingers[2].mainBone = hand.bones[13];
+	  fingers[2].phalanges = [hand.bones[14], hand.bones[15]];
+
+	  //little
+	  fingers[3].mainBone = hand.bones[17];
+	  fingers[3].phalanges = [hand.bones[18], hand.bones[19]];
+
+	  //thumb
+	  fingers[4].mainBone = hand.bones[2];
+	  fingers[4].phalanges = [hand.bones[3]];
+
+
+
+	  //need a call back for this async event to return the finished hand rig
+	});
+
+	return {
+		fingers: fingers,
+		hand: hand
+	};
+
+};
+},{}],5:[function(require,module,exports){
 'use strict';
 
 exports.kalmanFilter = function(){
@@ -252,11 +435,54 @@ exports.kalmanFilter = function(){
     KM:KM
   };
 };
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+'use strict';
+
+//Interaction Box conversion method to find central co-ordinates for interacting with stage. 
+//Does it need third iteration for z co-ordinates? Is Z axis going to be positive or negative
+exports.leapToScene = function(frame, leapPos){
+
+  var iBox = frame.interactionBox;
+
+  var left = iBox.center[0] - iBox.size[0]/2;
+  var top = iBox.center[1] + iBox.size[1]/2;
+  var back = iBox.center[2] + iBox.size[2]/2;
+
+  var x = leapPos[2] - left;
+  var y = leapPos[1] - top;
+  var z = leapPos[0] - back;
+
+  //why are x and z axis swapped round from the Hand position? This is weird.
+
+  x /= iBox.size[0];
+  y /= iBox.size[1];
+  z /= iBox.size[2];
+
+  // x *= width;
+  // y *= height;
+ //  z *= 500; //what is depth of interaction box as relates to screen size?
+
+
+//this is fudging the interaction box positions to map to center of screen
+//this is partly to do with the camera positioning. its not flat to stage.
+  x *= 10;
+  y *= 10;
+  z *= 10;
+
+  x += 10;
+  y += 10;
+  z += 10;
+
+  return {x: x ,y: y ,z: -z};
+
+  //z seems to be working in the x axis and vice versa? 
+  //Why does z require the negative value here?
+};
+},{}],7:[function(require,module,exports){
 "use strict";
 
 exports.kalmanOutput = function(kalman){
-//	$(".kalman").html("KAL: beta: " +kalman[1].toFixed(6)+", alpha: " +kalman[0].toFixed(6) + ", gamma: " +kalman[2].toFixed(6));
+	$(".kalman").html("KAL: beta: " +kalman[1].toFixed(6)+", alpha: " +kalman[0].toFixed(6) + ", gamma: " +kalman[2].toFixed(6));
 };
 
 exports.showFlip = function(prevAlpha, currAlpha, diff){
@@ -268,26 +494,26 @@ exports.showOrientation = function(orientation){
 };
 
 exports.showAccelerometer = function(){
-	function getDeviceRotation(e){
-	//	$(".originals").html('ORIG beta: ' + e.beta.toFixed(6) + ", alpha: " + e.alpha.toFixed(6) + ", gamma: " + e.gamma.toFixed(6));
+	// function getDeviceRotation(e){
+	// //	$(".originals").html('ORIG beta: ' + e.beta.toFixed(6) + ", alpha: " + e.alpha.toFixed(6) + ", gamma: " + e.gamma.toFixed(6));
 		
-		var alpha = THREE.Math.degToRad(e.alpha).toFixed(6); 
-		var beta = THREE.Math.degToRad(e.beta).toFixed(6);
-		var gamma = THREE.Math.degToRad(e.gamma).toFixed(6);
+	// 	var alpha = THREE.Math.degToRad(e.alpha).toFixed(6); 
+	// 	var beta = THREE.Math.degToRad(e.beta).toFixed(6);
+	// 	var gamma = THREE.Math.degToRad(e.gamma).toFixed(6);
 	
-	//	$(".accelerometer").html('RADI beta: ' + beta + ", alpha: " + alpha + ", gamma: " + gamma);
-	}
+	// //	$(".accelerometer").html('RADI beta: ' + beta + ", alpha: " + alpha + ", gamma: " + gamma);
+	// }
 
-	if (window.DeviceOrientationEvent) {
-	  window.addEventListener('deviceorientation', getDeviceRotation, false);
-	}else{
-	  $(".accelerometer").html("NOT SUPPORTED");
-	}
+	// if (window.DeviceOrientationEvent) {
+	//   window.addEventListener('deviceorientation', getDeviceRotation, false);
+	// }else{
+	//   $(".accelerometer").html("NOT SUPPORTED");
+	// }
 };
 
 
 
-},{}],5:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left
@@ -377,4 +603,4 @@ exports.createStage = function(viewport, view){
 	return stageObjects;
 };
 
-},{}]},{},[2])
+},{}]},{},[3])

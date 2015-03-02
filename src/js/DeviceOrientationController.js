@@ -39,8 +39,6 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 		ROTATE_CONTROL:     'rotate'         // rotatestart, rotateend
 	};
 
-	
-
 	var fireEvent = function () {
 		var eventData;
 

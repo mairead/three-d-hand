@@ -37,6 +37,7 @@
     "$M": true,
     "$V": true,
     "$": true,
-    "THREE": true
+    "THREE": true,
+    "Leap": true
   }
 }

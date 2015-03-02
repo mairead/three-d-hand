@@ -2,8 +2,12 @@
 
 var threeDStage = require('./threeDStage.js');
 var orientationController = require('./DeviceOrientationController.js');
-var ctrl = orientationController.DeviceOrientationController;
+var hand = require('./hand.js');
+var animateHand = require('./animateHand.js');
 
+var ctrl = orientationController.DeviceOrientationController;
+var handLeft = hand.createHand();
+var handRight = hand.createHand();
 var stageLeft = threeDStage.createStage('.viewport-1', 'left');
 var stageRight = threeDStage.createStage('.viewport-2', 'right');
 
@@ -15,7 +19,10 @@ stageLeft.controls.connect();
 stageRight.controls = new ctrl( stageRight.camera, stageRight.renderer.domElement );
 stageRight.controls.connect();
 
-// Render loop
+stageLeft.scene.add(handLeft);
+stageRight.scene.add(handRight);
+
+// Render loop runs stage updating and view to cardboard
 function render() {
 	stageLeft.controls.update();
 	stageRight.controls.update();
@@ -37,6 +44,13 @@ var leap = new Leap.Controller({
 
 // connect controller
 leap.connect();
+
+// Init Leap loop, runs the animation of the ThreeD hand from the Leap input
+Leap.loop(function (frame) {
+  animateHand.animate(frame, handLeft.hand, handLeft.fingers); // pass frame and hand model
+  animateHand.animate(frame, handRight.hand, handRight.fing);
+});
+
 
 
 

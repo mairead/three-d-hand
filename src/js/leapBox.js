@@ -1,6 +1,9 @@
+'use strict';
+
 //Interaction Box conversion method to find central co-ordinates for interacting with stage. 
 //Does it need third iteration for z co-ordinates? Is Z axis going to be positive or negative
-function leapToScene(frame, leapPos){
+exports.leapToScene = function(frame, leapPos){
+
   var iBox = frame.interactionBox;
 
   var left = iBox.center[0] - iBox.size[0]/2;
@@ -36,4 +39,4 @@ function leapToScene(frame, leapPos){
 
   //z seems to be working in the x axis and vice versa? 
   //Why does z require the negative value here?
-}
+};
