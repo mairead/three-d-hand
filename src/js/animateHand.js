@@ -8,7 +8,6 @@ var leapBox = require('./leapBox.js');
 exports.animate = function(frame, handMesh, fingers){
   var fingersAssigned = false; //flag to determine if all fingers have been detected and assigned an ID
 
-
   function rotationCtrl(dir){
       // make sure fingers won't go into weird position. T
       //I think this doctors the direction object for each rotation to prevent large shifts
@@ -87,14 +86,5 @@ exports.animate = function(frame, handMesh, fingers){
         }
       }
     }
-
-    
-
-      //Update finger rotation
-      // for (var i = fingers.length - 1; i >= 0; i--) {
-      //   rotateBones(fingers[i]);
-      // };
-    //}
-
   }
 };

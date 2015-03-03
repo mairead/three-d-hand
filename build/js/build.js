@@ -1195,7 +1195,6 @@ var leapBox = require('./leapBox.js');
 exports.animate = function(frame, handMesh, fingers){
   var fingersAssigned = false; //flag to determine if all fingers have been detected and assigned an ID
 
-
   function rotationCtrl(dir){
       // make sure fingers won't go into weird position. T
       //I think this doctors the direction object for each rotation to prevent large shifts
@@ -1274,15 +1273,6 @@ exports.animate = function(frame, handMesh, fingers){
         }
       }
     }
-
-    
-
-      //Update finger rotation
-      // for (var i = fingers.length - 1; i >= 0; i--) {
-      //   rotateBones(fingers[i]);
-      // };
-    //}
-
   }
 };
 },{"./leapBox.js":8}],5:[function(require,module,exports){
@@ -1295,11 +1285,11 @@ var animateHand = require('./animateHand.js');
 require('es6-promise').polyfill();
 
 var handLoader = hand.createHand();  //returns loader async object
-var handRig;
-
+var handRigLeft, handRigRight;
 var stageLeft = threeDStage.createStage('.viewport-1', 'left');
 var stageRight = threeDStage.createStage('.viewport-2', 'right');
 var ctrl = orientationController.DeviceOrientationController;
+
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
 stageLeft.controls = new ctrl( stageLeft.camera, stageLeft.renderer.domElement );
@@ -1309,29 +1299,29 @@ stageRight.controls = new ctrl( stageRight.camera, stageRight.renderer.domElemen
 stageRight.controls.connect();
 
 //create promise implementation here to call hand loader
-var loadHandRigging = new Promise(function(resolve, reject){
+var loadHandRigging = new Promise(function(resolve){
   handLoader.handRigLoader.onLoadComplete = function(){
     resolve();
   };
 });
 
 //add hand to scene after promise is resolved
-loadHandRigging.then(function(result) {
+loadHandRigging.then(function() {
 
-  handRig = hand.getHand();
-  handRig.handMesh.position = new THREE.Vector3( 5, 0, 0 );
-  // handRig.handMesh.bones[0].rotation.set({x:0, y:0, z:0});
+  handRigLeft = hand.getHand();
+  handRigRight = hand.getHand();
 
-  console.log(handRig.handMesh.position)
+  stageLeft.scene.add(handRigLeft.handMesh);
 
-  stageLeft.scene.add(handRig);
-  stageRight.scene.add(handRig);
+  //Can't add mesh to both right and left hand of screen
+  //stageRight.scene.add(handRigRight.handMesh);
 
-  // Init Leap loop, runs the animation of the ThreeD hand from the Leap input
-  // Leap.loop(function (frame) {
-  //   console.log("loop")
-  //   animateHand.animate(frame, handRig.handMesh, handRig.fingers); // pass frame and hand model
-  // });
+
+  //Init Leap loop, runs the animation of the ThreeD hand from the Leap input
+  Leap.loop(function (frame) {
+    animateHand.animate(frame, handRigLeft.handMesh, handRigLeft.fingers); // pass frame and hand model
+    //animateHand.animate(frame, handRigRight.handMesh, handRigRight.fingers);
+  });
 }, function(err) {
   console.log(err); // Error: "It broke"
   console.log("hand rig not loaded in reject");
@@ -1352,14 +1342,14 @@ function render() {
 
 render();
 
-// // define connection settings
-// var leap = new Leap.Controller({
-//   host: '0.0.0.0',
-//   port: 6437
-// });
+// define connection settings
+var leap = new Leap.Controller({
+  host: '0.0.0.0',
+  port: 6437
+});
 
-// // connect controller
-// leap.connect();
+// connect controller
+leap.connect();
 
 
 
@@ -1436,7 +1426,7 @@ exports.getHand = function(){
 		handMesh: hand,
 	  fingers: fingers
 	};
-}
+};
 },{}],7:[function(require,module,exports){
 'use strict';
 
@@ -1572,7 +1562,7 @@ exports.createStage = function(viewport, view){
 
 	//TODO ES6: Declare vars as let further down where they are used
 	var container, light, torus, geometry, material;
-	var scene, camera, renderer;
+	var scene, camera, renderer, gridHelper ;
 
 	var size = 10;
 	var step = 1;
@@ -1581,7 +1571,7 @@ exports.createStage = function(viewport, view){
 
 	WIDTH = window.innerWidth/2;
 	HEIGHT = window.innerHeight/2;
-	VIEW_ANGLE = 10;
+	VIEW_ANGLE = 45;//was 10
 	ASPECT = WIDTH / HEIGHT;
 	NEAR = 1;
 	FAR = 10000;
@@ -1589,8 +1579,6 @@ exports.createStage = function(viewport, view){
 	var viewAngle = (view === 'left') ? 1 : -1;
 
 	container = document.querySelector(viewport);
-
-	//TODO ES6: Remove object mapping and add at bottom it doesn't need to be here
 
 	//rendering
 	scene = new THREE.Scene();
@@ -1606,7 +1594,7 @@ exports.createStage = function(viewport, view){
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	camera.position.set(60, 10, viewAngle);
+	camera.position.set(30, 10, viewAngle); //was 60
 	camera.lookAt(scene.position);
 	scene.add(camera);
 
@@ -1626,8 +1614,8 @@ exports.createStage = function(viewport, view){
 	scene.add(light);
 
 	//grid helper
-	var gridHelper = new THREE.GridHelper( size, step );	
-	gridHelper.position = new THREE.Vector3( 5, 0, 0 );
+	gridHelper = new THREE.GridHelper( size, step );	
+	gridHelper.position = new THREE.Vector3( 5, -1, 0 );
 	scene.add(gridHelper);
 	
 	//geometry
@@ -1640,8 +1628,9 @@ exports.createStage = function(viewport, view){
 	//moved from (2,2,0) to position items behind camera. This is a hack 
 	//combined with the alpha position to prevent the kalman filter breaking
 	torus.rotation.y += 90;
-	scene.add( torus );
 
+	scene.add( torus );
+	
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {
 		renderer: renderer,

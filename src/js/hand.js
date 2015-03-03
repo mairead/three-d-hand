@@ -67,4 +67,4 @@ exports.getHand = function(){
 		handMesh: hand,
 	  fingers: fingers
 	};
-}
+};

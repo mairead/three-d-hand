@@ -8,7 +8,7 @@ exports.createStage = function(viewport, view){
 
 	//TODO ES6: Declare vars as let further down where they are used
 	var container, light, torus, geometry, material;
-	var scene, camera, renderer;
+	var scene, camera, renderer, gridHelper ;
 
 	var size = 10;
 	var step = 1;
@@ -17,7 +17,7 @@ exports.createStage = function(viewport, view){
 
 	WIDTH = window.innerWidth/2;
 	HEIGHT = window.innerHeight/2;
-	VIEW_ANGLE = 10;
+	VIEW_ANGLE = 45;//was 10
 	ASPECT = WIDTH / HEIGHT;
 	NEAR = 1;
 	FAR = 10000;
@@ -25,8 +25,6 @@ exports.createStage = function(viewport, view){
 	var viewAngle = (view === 'left') ? 1 : -1;
 
 	container = document.querySelector(viewport);
-
-	//TODO ES6: Remove object mapping and add at bottom it doesn't need to be here
 
 	//rendering
 	scene = new THREE.Scene();
@@ -42,7 +40,7 @@ exports.createStage = function(viewport, view){
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	camera.position.set(60, 10, viewAngle);
+	camera.position.set(30, 10, viewAngle); //was 60
 	camera.lookAt(scene.position);
 	scene.add(camera);
 
@@ -62,8 +60,8 @@ exports.createStage = function(viewport, view){
 	scene.add(light);
 
 	//grid helper
-	var gridHelper = new THREE.GridHelper( size, step );	
-	gridHelper.position = new THREE.Vector3( 5, 0, 0 );
+	gridHelper = new THREE.GridHelper( size, step );	
+	gridHelper.position = new THREE.Vector3( 5, -1, 0 );
 	scene.add(gridHelper);
 	
 	//geometry
@@ -76,8 +74,9 @@ exports.createStage = function(viewport, view){
 	//moved from (2,2,0) to position items behind camera. This is a hack 
 	//combined with the alpha position to prevent the kalman filter breaking
 	torus.rotation.y += 90;
-	scene.add( torus );
 
+	scene.add( torus );
+	
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {
 		renderer: renderer,

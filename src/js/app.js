@@ -7,11 +7,11 @@ var animateHand = require('./animateHand.js');
 require('es6-promise').polyfill();
 
 var handLoader = hand.createHand();  //returns loader async object
-var handRig;
-
+var handRigLeft, handRigRight;
 var stageLeft = threeDStage.createStage('.viewport-1', 'left');
 var stageRight = threeDStage.createStage('.viewport-2', 'right');
 var ctrl = orientationController.DeviceOrientationController;
+
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
 stageLeft.controls = new ctrl( stageLeft.camera, stageLeft.renderer.domElement );
@@ -21,29 +21,29 @@ stageRight.controls = new ctrl( stageRight.camera, stageRight.renderer.domElemen
 stageRight.controls.connect();
 
 //create promise implementation here to call hand loader
-var loadHandRigging = new Promise(function(resolve, reject){
+var loadHandRigging = new Promise(function(resolve){
   handLoader.handRigLoader.onLoadComplete = function(){
     resolve();
   };
 });
 
 //add hand to scene after promise is resolved
-loadHandRigging.then(function(result) {
+loadHandRigging.then(function() {
 
-  handRig = hand.getHand();
-  handRig.handMesh.position = new THREE.Vector3( 5, 0, 0 );
-  // handRig.handMesh.bones[0].rotation.set({x:0, y:0, z:0});
+  handRigLeft = hand.getHand();
+  handRigRight = hand.getHand();
 
-  console.log(handRig.handMesh.position)
+  stageLeft.scene.add(handRigLeft.handMesh);
 
-  stageLeft.scene.add(handRig);
-  stageRight.scene.add(handRig);
+  //Can't add mesh to both right and left hand of screen
+  //stageRight.scene.add(handRigRight.handMesh);
 
-  // Init Leap loop, runs the animation of the ThreeD hand from the Leap input
-  // Leap.loop(function (frame) {
-  //   console.log("loop")
-  //   animateHand.animate(frame, handRig.handMesh, handRig.fingers); // pass frame and hand model
-  // });
+
+  //Init Leap loop, runs the animation of the ThreeD hand from the Leap input
+  Leap.loop(function (frame) {
+    animateHand.animate(frame, handRigLeft.handMesh, handRigLeft.fingers); // pass frame and hand model
+    //animateHand.animate(frame, handRigRight.handMesh, handRigRight.fingers);
+  });
 }, function(err) {
   console.log(err); // Error: "It broke"
   console.log("hand rig not loaded in reject");
@@ -64,14 +64,14 @@ function render() {
 
 render();
 
-// // define connection settings
-// var leap = new Leap.Controller({
-//   host: '0.0.0.0',
-//   port: 6437
-// });
+// define connection settings
+var leap = new Leap.Controller({
+  host: '0.0.0.0',
+  port: 6437
+});
 
-// // connect controller
-// leap.connect();
+// connect controller
+leap.connect();
 
 
 
