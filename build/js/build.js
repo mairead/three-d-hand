@@ -1310,17 +1310,15 @@ loadHandRigging.then(function() {
 
   handRigLeft = hand.getHand();
   handRigRight = hand.getHand();
-
-  stageLeft.scene.add(handRigLeft.handMesh);
-
+  
   //Can't add mesh to both right and left hand of screen
-  //stageRight.scene.add(handRigRight.handMesh);
-
-
+  stageLeft.scene.add(handRigLeft.handMesh);  
+  stageRight.scene.add(handRigRight.handMesh);
+  
   //Init Leap loop, runs the animation of the ThreeD hand from the Leap input
   Leap.loop(function (frame) {
     animateHand.animate(frame, handRigLeft.handMesh, handRigLeft.fingers); // pass frame and hand model
-    //animateHand.animate(frame, handRigRight.handMesh, handRigRight.fingers);
+    animateHand.animate(frame, handRigRight.handMesh, handRigRight.fingers);
   });
 }, function(err) {
   console.log(err); // Error: "It broke"
