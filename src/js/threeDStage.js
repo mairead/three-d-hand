@@ -1,34 +1,35 @@
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left
-exports.createStage = function(viewport, view){
+exports.createStage = function(viewport){
 	 
 	//TODO ES6: convert to destructuring at bottom 
 	var stageObjects = {}; 
 
 	//TODO ES6: Declare vars as let further down where they are used
-	var container, light, torus, geometry, material;
-	var scene, camera, renderer, gridHelper ;
+	var container = document.querySelector(viewport); 
+	var light; 
+	var torus;
+	var geometry; 
+	var material;
+	var scene = new THREE.Scene();
+	var camera;
+	var effect; 
 
+	var gridHelper;
 	var size = 10;
 	var step = 1;
 	
-	var WIDTH, HEIGHT, VIEW_ANGLE, ASPECT, NEAR, FAR;
+	var WIDTH = window.innerWidth*1.5; 
+	var HEIGHT = window.innerHeight;
 
-	WIDTH = window.innerWidth/2;
-	HEIGHT = window.innerHeight/2;
-	VIEW_ANGLE = 45;//was 10
-	ASPECT = WIDTH / HEIGHT;
-	NEAR = 1;
-	FAR = 10000;
+	var VIEW_ANGLE = 10; //was 10
+	var ASPECT = WIDTH / HEIGHT; 
+	var NEAR = 1;
+	var FAR = 10000;
 
-	var viewAngle = (view === 'left') ? 1 : -1;
+	var renderer = new THREE.WebGLRenderer({antialias:true}); 
 
-	container = document.querySelector(viewport);
-
-	//rendering
-	scene = new THREE.Scene();
-	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize(WIDTH, HEIGHT);
 	renderer.shadowMapEnabled = true;
 	renderer.shadowMapSoft = true;
@@ -36,17 +37,24 @@ exports.createStage = function(viewport, view){
 	renderer.shadowMapAutoUpdate = true;
 	renderer.setClearColor( 0xffffff, 1);
 	container.appendChild(renderer.domElement);
+	
+	effect = new THREE.StereoEffect( renderer );
+	
+	effect.setSize(WIDTH, HEIGHT);
+	//nb: can we change separation to calibrate for users
+	effect.separation = 2.5 * 0.0254 / 2; //cardboard 2.5 inches
 
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	camera.position.set(30, 10, viewAngle); //was 60
-	camera.lookAt(scene.position);
+	camera.position.set(60, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
+	camera.lookAt( scene.position );
+
 	scene.add(camera);
 
 	//lighting
 	light = new THREE.DirectionalLight(0xffffff);
-	light.position.set(0, 300, 0);
+	light.position.set(0, 100, 0);
 	light.castShadow = true;
 	light.shadowCameraLeft = -60;
 	light.shadowCameraTop = -60;
@@ -76,9 +84,10 @@ exports.createStage = function(viewport, view){
 	torus.rotation.y += 90;
 
 	scene.add( torus );
-	
+
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {
+		effect: effect,
 		renderer: renderer,
 		scene: scene,
 		camera: camera

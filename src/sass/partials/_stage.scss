@@ -1,3 +1,8 @@
+//  body {
+//   margin: 0px;
+//   overflow: hidden;
+// }
+
 /*body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
@@ -17,6 +22,22 @@ a {
 
 .cardboard-demo{
   width: auto; 
+}
+
+.viewport{
+  width: 100%;
+  height: 100%;
+  // position: absolute;
+  // top: 0;
+  // bottom: 0;
+  // right: 0;
+  // left: 0;
+
+  // canvas{
+  //   width: 1676px;
+  //   height: 672px;
+  // }
+
 }
 
 .viewport-1, .viewport-2{

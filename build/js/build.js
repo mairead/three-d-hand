@@ -1285,18 +1285,14 @@ var animateHand = require('./animateHand.js');
 require('es6-promise').polyfill();
 
 var handLoader = hand.createHand();  //returns loader async object
-var handRigLeft, handRigRight;
-var stageLeft = threeDStage.createStage('.viewport-1', 'left');
-var stageRight = threeDStage.createStage('.viewport-2', 'right');
+var handRig;
+var stage = threeDStage.createStage('.viewport');
 var ctrl = orientationController.DeviceOrientationController;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
-stageLeft.controls = new ctrl( stageLeft.camera, stageLeft.renderer.domElement );
-stageLeft.controls.connect();
-
-stageRight.controls = new ctrl( stageRight.camera, stageRight.renderer.domElement );
-stageRight.controls.connect();
+stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
+stage.orientationControls.connect();
 
 //create promise implementation here to call hand loader
 var loadHandRigging = new Promise(function(resolve){
@@ -1307,18 +1303,12 @@ var loadHandRigging = new Promise(function(resolve){
 
 //add hand to scene after promise is resolved
 loadHandRigging.then(function() {
-
-  handRigLeft = hand.getHand();
-  handRigRight = hand.getHand();
-  
-  //Can't add mesh to both right and left hand of screen
-  stageLeft.scene.add(handRigLeft.handMesh);  
-  stageRight.scene.add(handRigRight.handMesh);
-  
+  handRig = hand.getHand();
+  stage.scene.add(handRig.handMesh);  
   //Init Leap loop, runs the animation of the ThreeD hand from the Leap input
   Leap.loop(function (frame) {
-    animateHand.animate(frame, handRigLeft.handMesh, handRigLeft.fingers); // pass frame and hand model
-    animateHand.animate(frame, handRigRight.handMesh, handRigRight.fingers);
+    //animateHand.animate(frame, handRig.handMesh, handRig.fingers); 
+    // pass frame and hand model
   });
 }, function(err) {
   console.log(err); // Error: "It broke"
@@ -1328,13 +1318,10 @@ loadHandRigging.then(function() {
 
 // Render loop runs stage updating and view to cardboard
 function render() {
-	stageLeft.controls.update();
-	stageRight.controls.update();
+	stage.orientationControls.update();
 	//TODO ES6: Destructuring and aliasing in the parameters would
 	// clean up the render objects and make them more readable
-	stageRight.renderer.render( stageRight.scene, stageRight.camera );
-  stageLeft.renderer.render( stageLeft.scene, stageLeft.camera );
-  
+  stage.effect.render( stage.scene, stage.camera );
   requestAnimationFrame(render);
 }
 
@@ -1348,10 +1335,6 @@ var leap = new Leap.Controller({
 
 // connect controller
 leap.connect();
-
-
-
-
 
 
 },{"./DeviceOrientationController.js":3,"./animateHand.js":4,"./hand.js":6,"./threeDStage.js":10,"es6-promise":2}],6:[function(require,module,exports){
@@ -1553,34 +1536,35 @@ exports.showAccelerometer = function(){
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left
-exports.createStage = function(viewport, view){
+exports.createStage = function(viewport){
 	 
 	//TODO ES6: convert to destructuring at bottom 
 	var stageObjects = {}; 
 
 	//TODO ES6: Declare vars as let further down where they are used
-	var container, light, torus, geometry, material;
-	var scene, camera, renderer, gridHelper ;
+	var container = document.querySelector(viewport); 
+	var light; 
+	var torus;
+	var geometry; 
+	var material;
+	var scene = new THREE.Scene();
+	var camera;
+	var effect; 
 
+	var gridHelper;
 	var size = 10;
 	var step = 1;
 	
-	var WIDTH, HEIGHT, VIEW_ANGLE, ASPECT, NEAR, FAR;
+	var WIDTH = window.innerWidth*1.5; 
+	var HEIGHT = window.innerHeight;
 
-	WIDTH = window.innerWidth/2;
-	HEIGHT = window.innerHeight/2;
-	VIEW_ANGLE = 45;//was 10
-	ASPECT = WIDTH / HEIGHT;
-	NEAR = 1;
-	FAR = 10000;
+	var VIEW_ANGLE = 10; //was 10
+	var ASPECT = WIDTH / HEIGHT; 
+	var NEAR = 1;
+	var FAR = 10000;
 
-	var viewAngle = (view === 'left') ? 1 : -1;
+	var renderer = new THREE.WebGLRenderer({antialias:true}); 
 
-	container = document.querySelector(viewport);
-
-	//rendering
-	scene = new THREE.Scene();
-	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize(WIDTH, HEIGHT);
 	renderer.shadowMapEnabled = true;
 	renderer.shadowMapSoft = true;
@@ -1588,17 +1572,24 @@ exports.createStage = function(viewport, view){
 	renderer.shadowMapAutoUpdate = true;
 	renderer.setClearColor( 0xffffff, 1);
 	container.appendChild(renderer.domElement);
+	
+	effect = new THREE.StereoEffect( renderer );
+	
+	effect.setSize(WIDTH, HEIGHT);
+	//nb: can we change separation to calibrate for users
+	effect.separation = 2.5 * 0.0254 / 2; //cardboard 2.5 inches
 
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	camera.position.set(30, 10, viewAngle); //was 60
-	camera.lookAt(scene.position);
+	camera.position.set(60, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
+	camera.lookAt( scene.position );
+
 	scene.add(camera);
 
 	//lighting
 	light = new THREE.DirectionalLight(0xffffff);
-	light.position.set(0, 300, 0);
+	light.position.set(0, 100, 0);
 	light.castShadow = true;
 	light.shadowCameraLeft = -60;
 	light.shadowCameraTop = -60;
@@ -1628,9 +1619,10 @@ exports.createStage = function(viewport, view){
 	torus.rotation.y += 90;
 
 	scene.add( torus );
-	
+
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {
+		effect: effect,
 		renderer: renderer,
 		scene: scene,
 		camera: camera

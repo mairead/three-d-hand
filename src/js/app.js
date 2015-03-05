@@ -7,18 +7,14 @@ var animateHand = require('./animateHand.js');
 require('es6-promise').polyfill();
 
 var handLoader = hand.createHand();  //returns loader async object
-var handRigLeft, handRigRight;
-var stageLeft = threeDStage.createStage('.viewport-1', 'left');
-var stageRight = threeDStage.createStage('.viewport-2', 'right');
+var handRig;
+var stage = threeDStage.createStage('.viewport');
 var ctrl = orientationController.DeviceOrientationController;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
-stageLeft.controls = new ctrl( stageLeft.camera, stageLeft.renderer.domElement );
-stageLeft.controls.connect();
-
-stageRight.controls = new ctrl( stageRight.camera, stageRight.renderer.domElement );
-stageRight.controls.connect();
+stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
+stage.orientationControls.connect();
 
 //create promise implementation here to call hand loader
 var loadHandRigging = new Promise(function(resolve){
@@ -29,18 +25,12 @@ var loadHandRigging = new Promise(function(resolve){
 
 //add hand to scene after promise is resolved
 loadHandRigging.then(function() {
-
-  handRigLeft = hand.getHand();
-  handRigRight = hand.getHand();
-  
-  //Can't add mesh to both right and left hand of screen
-  stageLeft.scene.add(handRigLeft.handMesh);  
-  stageRight.scene.add(handRigRight.handMesh);
-  
+  handRig = hand.getHand();
+  stage.scene.add(handRig.handMesh);  
   //Init Leap loop, runs the animation of the ThreeD hand from the Leap input
   Leap.loop(function (frame) {
-    animateHand.animate(frame, handRigLeft.handMesh, handRigLeft.fingers); // pass frame and hand model
-    animateHand.animate(frame, handRigRight.handMesh, handRigRight.fingers);
+    //animateHand.animate(frame, handRig.handMesh, handRig.fingers); 
+    // pass frame and hand model
   });
 }, function(err) {
   console.log(err); // Error: "It broke"
@@ -50,13 +40,10 @@ loadHandRigging.then(function() {
 
 // Render loop runs stage updating and view to cardboard
 function render() {
-	stageLeft.controls.update();
-	stageRight.controls.update();
+	stage.orientationControls.update();
 	//TODO ES6: Destructuring and aliasing in the parameters would
 	// clean up the render objects and make them more readable
-	stageRight.renderer.render( stageRight.scene, stageRight.camera );
-  stageLeft.renderer.render( stageLeft.scene, stageLeft.camera );
-  
+  stage.effect.render( stage.scene, stage.camera );
   requestAnimationFrame(render);
 }
 
@@ -70,8 +57,4 @@ var leap = new Leap.Controller({
 
 // connect controller
 leap.connect();
-
-
-
-
 
