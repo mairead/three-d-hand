@@ -1,15 +1,17 @@
 'use strict';
 
+require('es6-promise').polyfill();
+
 var threeDStage = require('./threeDStage.js');
 var orientationController = require('./DeviceOrientationController.js');
 var hand = require('./hand.js');
 var animateHand = require('./animateHand.js');
-require('es6-promise').polyfill();
 
 var handLoader = hand.createHand();  //returns loader async object
 var handRig;
-var stage = threeDStage.createStage('.viewport');
+var stage = threeDStage.createStage();
 var ctrl = orientationController.DeviceOrientationController;
+var connection;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
@@ -27,34 +29,37 @@ var loadHandRigging = new Promise(function(resolve){
 loadHandRigging.then(function() {
   handRig = hand.getHand();
   stage.scene.add(handRig.handMesh);  
-  //Init Leap loop, runs the animation of the ThreeD hand from the Leap input
-  Leap.loop(function (frame) {
-    //animateHand.animate(frame, handRig.handMesh, handRig.fingers); 
-    // pass frame and hand model
-  });
+  connection = new WebSocket('ws://' + window.location.hostname + ':1337');
+  connection.onmessage = function (message) { 
+    var frameData = JSON.parse(message.data);
+    animateHand.animate(frameData, handRig.handMesh, handRig.fingers); 
+  };
 }, function(err) {
-  console.log(err); // Error: "It broke"
-  console.log("hand rig not loaded in reject");
+  console.log(err, "hand rig not loaded in reject");
 });
 
+// function onWindowResize() {
+
+//   // windowHalfX = window.innerWidth / 2,
+//   // windowHalfY = window.innerHeight / 2,
+
+//   stage.camera.aspect = window.innerWidth / window.innerHeight;
+//   stage.camera.updateProjectionMatrix();
+
+//   stage.effect.setSize( window.innerWidth, window.innerHeight );
+
+// }
 
 // Render loop runs stage updating and view to cardboard
 function render() {
-	stage.orientationControls.update();
+	//stage.orientationControls.update();
 	//TODO ES6: Destructuring and aliasing in the parameters would
 	// clean up the render objects and make them more readable
   stage.effect.render( stage.scene, stage.camera );
   requestAnimationFrame(render);
 }
-
 render();
 
-// define connection settings
-var leap = new Leap.Controller({
-  host: '0.0.0.0',
-  port: 6437
-});
+// //window.addEventListener( 'resize', onWindowResize, false );
 
-// connect controller
-leap.connect();
 

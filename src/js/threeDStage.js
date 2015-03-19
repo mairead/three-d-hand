@@ -1,13 +1,13 @@
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left
-exports.createStage = function(viewport){
+exports.createStage = function(){
 	 
 	//TODO ES6: convert to destructuring at bottom 
 	var stageObjects = {}; 
 
 	//TODO ES6: Declare vars as let further down where they are used
-	var container = document.querySelector(viewport); 
+	var container;// = document.querySelector(viewport); 
 	var light; 
 	var torus;
 	var geometry; 
@@ -19,8 +19,12 @@ exports.createStage = function(viewport){
 	var gridHelper;
 	var size = 10;
 	var step = 1;
+
+	container = document.createElement( 'div' );
+	document.body.appendChild( container );
 	
-	var WIDTH = window.innerWidth*1.5; 
+	//why is it only occupying half the screen? is this the aspect?
+	var WIDTH = window.innerWidth; 
 	var HEIGHT = window.innerHeight;
 
 	var VIEW_ANGLE = 10; //was 10
@@ -77,13 +81,14 @@ exports.createStage = function(viewport){
 	material = new THREE.MeshNormalMaterial( );
 	torus = new THREE.Mesh( geometry, material );
 	
-	torus.position.set(100, 3, 0); 
-	//torus.position.set(2, 2, 0); 
+	//why is torus appearing to left of screen instead of middle?
+	//torus.position.set(100, 3, 0); 
+	torus.position.set(2, 2, 0); 
 	//moved from (2,2,0) to position items behind camera. This is a hack 
 	//combined with the alpha position to prevent the kalman filter breaking
 	torus.rotation.y += 90;
 
-	scene.add( torus );
+	scene.add(torus);
 
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {

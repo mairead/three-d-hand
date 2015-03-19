@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 exports.kalmanOutput = function(kalman){
 	$(".kalman").html("KAL: beta: " +kalman[1].toFixed(6)+", alpha: " +kalman[0].toFixed(6) + ", gamma: " +kalman[2].toFixed(6));
@@ -30,4 +30,7 @@ exports.showAccelerometer = function(){
 	// }
 };
 
+exports.showLeapData = function(frameData){
+	$(".debugger").html("leapdata:" + frameData);
+};
 

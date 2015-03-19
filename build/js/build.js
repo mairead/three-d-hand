@@ -1126,12 +1126,13 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 			//prevent the kalman filter skewing when it hits the 0-360 gap
 			alpha = this.deviceOrientation.alpha;
 			if(alpha > 270){
-				alpha = alpha - 180;
+				alpha = alpha - 90; //was 180
 			}else if (alpha < 90){
-				alpha = alpha + 180;
+				alpha = alpha + 90;
 			}
 
 			alpha  = THREE.Math.degToRad( alpha || 0 ); // Z
+			//alpha  = THREE.Math.degToRad( this.deviceOrientation.alpha  || 0 ); // Z'
 			beta   = THREE.Math.degToRad( this.deviceOrientation.beta  || 0 ); // X'
 			gamma  = THREE.Math.degToRad( this.deviceOrientation.gamma || 0 ); // Y''
 			orient = THREE.Math.degToRad( this.screenOrientation       || 0 ); // O
@@ -1278,16 +1279,18 @@ exports.animate = function(frame, handMesh, fingers){
 },{"./leapBox.js":8}],5:[function(require,module,exports){
 'use strict';
 
+require('es6-promise').polyfill();
+
 var threeDStage = require('./threeDStage.js');
 var orientationController = require('./DeviceOrientationController.js');
 var hand = require('./hand.js');
 var animateHand = require('./animateHand.js');
-require('es6-promise').polyfill();
 
 var handLoader = hand.createHand();  //returns loader async object
 var handRig;
-var stage = threeDStage.createStage('.viewport');
+var stage = threeDStage.createStage();
 var ctrl = orientationController.DeviceOrientationController;
+var connection;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
@@ -1305,36 +1308,39 @@ var loadHandRigging = new Promise(function(resolve){
 loadHandRigging.then(function() {
   handRig = hand.getHand();
   stage.scene.add(handRig.handMesh);  
-  //Init Leap loop, runs the animation of the ThreeD hand from the Leap input
-  Leap.loop(function (frame) {
-    //animateHand.animate(frame, handRig.handMesh, handRig.fingers); 
-    // pass frame and hand model
-  });
+  connection = new WebSocket('ws://' + window.location.hostname + ':1337');
+  connection.onmessage = function (message) { 
+    var frameData = JSON.parse(message.data);
+    animateHand.animate(frameData, handRig.handMesh, handRig.fingers); 
+  };
 }, function(err) {
-  console.log(err); // Error: "It broke"
-  console.log("hand rig not loaded in reject");
+  console.log(err, "hand rig not loaded in reject");
 });
 
+// function onWindowResize() {
+
+//   // windowHalfX = window.innerWidth / 2,
+//   // windowHalfY = window.innerHeight / 2,
+
+//   stage.camera.aspect = window.innerWidth / window.innerHeight;
+//   stage.camera.updateProjectionMatrix();
+
+//   stage.effect.setSize( window.innerWidth, window.innerHeight );
+
+// }
 
 // Render loop runs stage updating and view to cardboard
 function render() {
-	stage.orientationControls.update();
+	//stage.orientationControls.update();
 	//TODO ES6: Destructuring and aliasing in the parameters would
 	// clean up the render objects and make them more readable
   stage.effect.render( stage.scene, stage.camera );
   requestAnimationFrame(render);
 }
-
 render();
 
-// define connection settings
-var leap = new Leap.Controller({
-  host: '0.0.0.0',
-  port: 6437
-});
+// //window.addEventListener( 'resize', onWindowResize, false );
 
-// connect controller
-leap.connect();
 
 
 },{"./DeviceOrientationController.js":3,"./animateHand.js":4,"./hand.js":6,"./threeDStage.js":10,"es6-promise":2}],6:[function(require,module,exports){
@@ -1498,7 +1504,7 @@ exports.leapToScene = function(frame, leapPos){
   //Why does z require the negative value here?
 };
 },{}],9:[function(require,module,exports){
-"use strict";
+'use strict';
 
 exports.kalmanOutput = function(kalman){
 	$(".kalman").html("KAL: beta: " +kalman[1].toFixed(6)+", alpha: " +kalman[0].toFixed(6) + ", gamma: " +kalman[2].toFixed(6));
@@ -1530,19 +1536,22 @@ exports.showAccelerometer = function(){
 	// }
 };
 
+exports.showLeapData = function(frameData){
+	$(".debugger").html("leapdata:" + frameData);
+};
 
 
 },{}],10:[function(require,module,exports){
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left
-exports.createStage = function(viewport){
+exports.createStage = function(){
 	 
 	//TODO ES6: convert to destructuring at bottom 
 	var stageObjects = {}; 
 
 	//TODO ES6: Declare vars as let further down where they are used
-	var container = document.querySelector(viewport); 
+	var container;// = document.querySelector(viewport); 
 	var light; 
 	var torus;
 	var geometry; 
@@ -1554,8 +1563,12 @@ exports.createStage = function(viewport){
 	var gridHelper;
 	var size = 10;
 	var step = 1;
+
+	container = document.createElement( 'div' );
+	document.body.appendChild( container );
 	
-	var WIDTH = window.innerWidth*1.5; 
+	//why is it only occupying half the screen? is this the aspect?
+	var WIDTH = window.innerWidth; 
 	var HEIGHT = window.innerHeight;
 
 	var VIEW_ANGLE = 10; //was 10
@@ -1612,13 +1625,14 @@ exports.createStage = function(viewport){
 	material = new THREE.MeshNormalMaterial( );
 	torus = new THREE.Mesh( geometry, material );
 	
-	torus.position.set(100, 3, 0); 
-	//torus.position.set(2, 2, 0); 
+	//why is torus appearing to left of screen instead of middle?
+	//torus.position.set(100, 3, 0); 
+	torus.position.set(2, 2, 0); 
 	//moved from (2,2,0) to position items behind camera. This is a hack 
 	//combined with the alpha position to prevent the kalman filter breaking
 	torus.rotation.y += 90;
 
-	scene.add( torus );
+	scene.add(torus);
 
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {

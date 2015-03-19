@@ -97,12 +97,13 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 			//prevent the kalman filter skewing when it hits the 0-360 gap
 			alpha = this.deviceOrientation.alpha;
 			if(alpha > 270){
-				alpha = alpha - 180;
+				alpha = alpha - 90; //was 180
 			}else if (alpha < 90){
-				alpha = alpha + 180;
+				alpha = alpha + 90;
 			}
 
 			alpha  = THREE.Math.degToRad( alpha || 0 ); // Z
+			//alpha  = THREE.Math.degToRad( this.deviceOrientation.alpha  || 0 ); // Z'
 			beta   = THREE.Math.degToRad( this.deviceOrientation.beta  || 0 ); // X'
 			gamma  = THREE.Math.degToRad( this.deviceOrientation.gamma || 0 ); // Y''
 			orient = THREE.Math.degToRad( this.screenOrientation       || 0 ); // O
