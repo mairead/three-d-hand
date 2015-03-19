@@ -58,7 +58,7 @@ exports.forEach = function(arr, fn, scope){
 exports.map = function(arr, fn, scope){
   var result = [];
   for (var i = 0, l = arr.length; i < l; i++)
-    result.push(fn.call(scope, arr[i], i));
+    result.push(fn.call(scope, arr[i], i, arr));
   return result;
 };
 
@@ -127,7 +127,7 @@ exports.filter = function(arr, fn){
 
 exports.keys = Object.keys || function(obj) {
   var keys = []
-    , has = Object.prototype.hasOwnProperty // for `window` on <=IE8
+    , has = Object.prototype.hasOwnProperty; // for `window` on <=IE8
 
   for (var key in obj) {
     if (has.call(obj, key)) {
@@ -158,6 +158,28 @@ exports.watch = function(files, fn){
 };
 
 /**
+ * Array.isArray (<=IE8)
+ *
+ * @param {Object} obj
+ * @return {Boolean}
+ * @api private
+ */
+var isArray = Array.isArray || function (obj) {
+  return '[object Array]' == {}.toString.call(obj);
+};
+
+/**
+ * @description
+ * Buffer.prototype.toJSON polyfill
+ * @type {Function}
+ */
+if(typeof Buffer !== 'undefined' && Buffer.prototype) {
+  Buffer.prototype.toJSON = Buffer.prototype.toJSON || function () {
+    return Array.prototype.slice.call(this, 0);
+  };
+}
+
+/**
  * Ignored files.
  */
 
@@ -179,15 +201,15 @@ exports.files = function(dir, ext, ret){
   var re = new RegExp('\\.(' + ext.join('|') + ')$');
 
   fs.readdirSync(dir)
-  .filter(ignored)
-  .forEach(function(path){
-    path = join(dir, path);
-    if (fs.statSync(path).isDirectory()) {
-      exports.files(path, ext, ret);
-    } else if (path.match(re)) {
-      ret.push(path);
-    }
-  });
+    .filter(ignored)
+    .forEach(function(path){
+      path = join(dir, path);
+      if (fs.statSync(path).isDirectory()) {
+        exports.files(path, ext, ret);
+      } else if (path.match(re)) {
+        ret.push(path);
+      }
+    });
 
   return ret;
 };
@@ -364,29 +386,93 @@ exports.type = function type(value) {
  */
 
 exports.stringify = function(value) {
-  var prop,
-    type = exports.type(value);
-
-  if (type === 'null' || type === 'undefined') {
-    return '[' + type + ']';
-  }
-
-  if (type === 'date') {
-    return '[Date: ' + value.toISOString() + ']';
-  }
+  var type = exports.type(value);
 
   if (!~exports.indexOf(['object', 'array', 'function'], type)) {
-    return value.toString();
+    if(type != 'buffer') {
+      return jsonStringify(value);
+    }
+    var json = value.toJSON();
+    // Based on the toJSON result
+    return jsonStringify(json.data && json.type ? json.data : json, 2)
+      .replace(/,(\n|$)/g, '$1');
   }
 
-  for (prop in value) {
-    if (value.hasOwnProperty(prop)) {
-      return JSON.stringify(exports.canonicalize(value), null, 2).replace(/,(\n|$)/g, '$1');
+  for (var prop in value) {
+    if (Object.prototype.hasOwnProperty.call(value, prop)) {
+      return jsonStringify(exports.canonicalize(value), 2).replace(/,(\n|$)/g, '$1');
     }
   }
 
   return emptyRepresentation(value, type);
 };
+
+/**
+ * @description
+ * like JSON.stringify but more sense.
+ * @param {Object}  object
+ * @param {Number=} spaces
+ * @param {number=} depth
+ * @returns {*}
+ * @private
+ */
+function jsonStringify(object, spaces, depth) {
+  if(typeof spaces == 'undefined') return _stringify(object);  // primitive types
+
+  depth = depth || 1;
+  var space = spaces * depth
+    , str = isArray(object) ? '[' : '{'
+    , end = isArray(object) ? ']' : '}'
+    , length = object.length || exports.keys(object).length
+    , repeat = function(s, n) { return new Array(n).join(s); }; // `.repeat()` polyfill
+
+  function _stringify(val) {
+    switch (exports.type(val)) {
+      case 'null':
+      case 'undefined':
+        val = '[' + val + ']';
+        break;
+      case 'array':
+      case 'object':
+        val = jsonStringify(val, spaces, depth + 1);
+        break;
+      case 'boolean':
+      case 'regexp':
+      case 'number':
+        val = val === 0 && (1/val) === -Infinity // `-0`
+          ? '-0'
+          : val.toString();
+        break;
+      case 'date':
+        val = '[Date: ' + val.toISOString() + ']';
+        break;
+      case 'buffer':
+        var json = val.toJSON();
+        // Based on the toJSON result
+        json = json.data && json.type ? json.data : json;
+        val = '[Buffer: ' + jsonStringify(json, 2, depth + 1) + ']';
+        break;
+      default:
+        val = (val == '[Function]' || val == '[Circular]')
+          ? val
+          : '"' + val + '"'; //string
+    }
+    return val;
+  }
+
+  for(var i in object) {
+    if(!object.hasOwnProperty(i)) continue;        // not my business
+    --length;
+    str += '\n ' + repeat(' ', space)
+      + (isArray(object) ? '' : '"' + i + '": ') // key
+      +  _stringify(object[i])                   // value
+      + (length ? ',' : '');                     // comma
+  }
+
+  return str + (str.length != 1                    // [], {}
+    ? '\n' + repeat(' ', --space) + end
+    : end);
+}
 
 /**
  * Return if obj is a Buffer
@@ -434,8 +520,6 @@ exports.canonicalize = function(value, stack) {
 
   switch(type) {
     case 'undefined':
-      canonicalizedObj = '[undefined]';
-      break;
     case 'buffer':
     case 'null':
       canonicalizedObj = value;
@@ -446,9 +530,6 @@ exports.canonicalize = function(value, stack) {
           return exports.canonicalize(item, stack);
         });
       });
-      break;
-    case 'date':
-      canonicalizedObj = '[Date: ' + value.toISOString() + ']';
       break;
     case 'function':
       for (prop in value) {
@@ -468,7 +549,9 @@ exports.canonicalize = function(value, stack) {
         });
       });
       break;
+    case 'date':
     case 'number':
+    case 'regexp':
     case 'boolean':
       canonicalizedObj = value;
       break;
@@ -504,7 +587,7 @@ exports.lookupFiles = function lookupFiles(path, extensions, recursive) {
     return;
   }
 
-  fs.readdirSync(path).forEach(function(file){
+  fs.readdirSync(path).forEach(function(file) {
     file = join(path, file);
     try {
       var stat = fs.statSync(file);
@@ -531,7 +614,7 @@ exports.lookupFiles = function lookupFiles(path, extensions, recursive) {
  * @return {Error}
  */
 
-exports.undefinedError = function(){
+exports.undefinedError = function() {
   return new Error('Caught undefined error, did you throw without specifying what?');
 };
 
@@ -542,7 +625,7 @@ exports.undefinedError = function(){
  * @return {Error}
  */
 
-exports.getError = function(err){
+exports.getError = function(err) {
   return err || exports.undefinedError();
 };
 

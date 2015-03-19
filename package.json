@@ -54,7 +54,6 @@
     "three": "^0.69.0",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "latest",
-    "ws": "^0.7.1",
     "yargs": "^2.3.0"
   }
 }

@@ -5,7 +5,8 @@
 var tty = require('tty')
   , diff = require('diff')
   , ms = require('../ms')
-  , utils = require('../utils');
+  , utils = require('../utils')
+  , supportsColor = process.env ? require('supports-color') : null;
 
 /**
  * Save timer references to avoid Sinon interfering (see GH-237).
@@ -30,10 +31,12 @@ var isatty = tty.isatty(1) && tty.isatty(2);
 exports = module.exports = Base;
 
 /**
- * Enable coloring by default.
+ * Enable coloring by default, except in the browser interface.
  */
 
-exports.useColors = isatty || (process.env.MOCHA_COLORS !== undefined);
+exports.useColors = process.env
+  ? (supportsColor || (process.env.MOCHA_COLORS !== undefined))
+  : false;
 
 /**
  * Inline diffs instead of +/-
@@ -175,7 +178,6 @@ exports.list = function(failures){
     if (err.uncaught) {
       msg = 'Uncaught ' + msg;
     }
-
     // explicitly show diff
     if (err.showDiff && sameType(actual, expected)) {
 
@@ -386,7 +388,7 @@ function unifiedDiff(err, escape) {
   function notBlank(line) {
     return line != null;
   }
-  msg = diff.createPatch('string', err.actual, err.expected);
+  var msg = diff.createPatch('string', err.actual, err.expected);
   var lines = msg.split('\n').splice(4);
   return '\n      '
          + colorLines('diff added',   '+ expected') + ' '

@@ -1,5 +1,5 @@
 /**
- *  Copyright (c) 2014, Facebook, Inc.
+ *  Copyright (c) 2014-2015, Facebook, Inc.
  *  All rights reserved.
  *
  *  This source code is licensed under the BSD-style license found in the
@@ -272,8 +272,8 @@ declare module 'immutable' {
      * Index numbers are used as keys to determine the path to follow in
      * the List.
      */
-    setIn(keyPath: Array<any>, value: T): List<T>;
-    setIn(keyPath: Iterable<any, any>, value: T): List<T>;
+    setIn(keyPath: Array<any>, value: any): List<T>;
+    setIn(keyPath: Iterable<any, any>, value: any): List<T>;
 
     /**
      * Returns a new List having removed the value at this `keyPath`. If any
@@ -524,8 +524,8 @@ declare module 'immutable' {
      * Returns a new Map having set `value` at this `keyPath`. If any keys in
      * `keyPath` do not exist, a new immutable Map will be created at that key.
      */
-    setIn(keyPath: Array<any>, value: V): Map<K, V>;
-    setIn(KeyPath: Iterable<any, any>, value: V): Map<K, V>;
+    setIn(keyPath: Array<any>, value: any): Map<K, V>;
+    setIn(KeyPath: Iterable<any, any>, value: any): Map<K, V>;
 
     /**
      * Returns a new Map having removed the value at this `keyPath`. If any keys
@@ -677,7 +677,7 @@ declare module 'immutable' {
    * JavaScript Object.
    *
    * Note that `OrderedMap` are more expensive than non-ordered `Map` and may
-   * consume more memory. `OrderedMap#set` is amoratized O(log32 N), but not
+   * consume more memory. `OrderedMap#set` is amortized O(log32 N), but not
    * stable.
    */
 
@@ -830,7 +830,7 @@ declare module 'immutable' {
    * The iteration behavior of OrderedSet is the same as native ES6 Set.
    *
    * Note that `OrderedSet` are more expensive than non-ordered `Set` and may
-   * consume more memory. `OrderedSet#add` is amoratized O(log32 N), but not
+   * consume more memory. `OrderedSet#add` is amortized O(log32 N), but not
    * stable.
    */
   export module OrderedSet {
@@ -1714,7 +1714,7 @@ declare module 'immutable' {
      * Returns a new Iterable of the same type containing all entries except
      * the first.
      */
-    rest(): /*this*/Iterable<K, V>
+    rest(): /*this*/Iterable<K, V>;
 
     /**
      * Returns a new Iterable of the same type containing all entries except
@@ -2004,7 +2004,7 @@ declare module 'immutable' {
     ): V;
 
     /**
-     * Returns the maximum value in this collection. If any values are
+     * Returns the minimum value in this collection. If any values are
      * comparatively equivalent, the first one found will be returned.
      *
      * The `comparator` is used in the same way as `Iterable#sort`. If it is not
@@ -2285,8 +2285,6 @@ declare module 'immutable' {
     /**
      * Returns an Iterable of the same type "zipped" with the provided
      * iterables by using a custom `zipper` function.
-     *
-     * Like `zipWith`, but using the default `zipper`: creating an `Array`.
      *
      *     var a = Seq.of(1, 2, 3);
      *     var b = Seq.of(4, 5, 6);
