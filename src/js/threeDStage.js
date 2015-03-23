@@ -42,7 +42,8 @@ exports.createStage = function(){
 	renderer.setClearColor( 0xffffff, 1);
 	container.appendChild(renderer.domElement);
 	
-	effect = new THREE.StereoEffect( renderer );
+	//effect = new THREE.StereoEffect( renderer );
+	effect = renderer;
 	
 	effect.setSize(WIDTH, HEIGHT);
 	//nb: can we change separation to calibrate for users

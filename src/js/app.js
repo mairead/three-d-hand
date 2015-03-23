@@ -3,40 +3,36 @@
 require('es6-promise').polyfill();
 
 var threeDStage = require('./threeDStage.js');
-var orientationController = require('./DeviceOrientationController.js');
-var hand = require('./hand.js');
-var animateHand = require('./animateHand.js');
+// var orientationController = require('./DeviceOrientationController.js');
+// var hand = require('./hand.js');
+// var animateHand = require('./animateHand.js');
 
-var handLoader = hand.createHand();  //returns loader async object
-var handRig;
+// var handLoader = hand.createHand();  //returns loader async object
+// var handRig;
 var stage = threeDStage.createStage();
-var ctrl = orientationController.DeviceOrientationController;
-var connection;
+// var ctrl = orientationController.DeviceOrientationController;
+// var connection;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
-stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
-stage.orientationControls.connect();
+// stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
+// stage.orientationControls.connect();
 
 //create promise implementation here to call hand loader
-var loadHandRigging = new Promise(function(resolve){
-  handLoader.handRigLoader.onLoadComplete = function(){
-    resolve();
-  };
-});
+// var loadHandRigging = new Promise(function(resolve){
+//   handLoader.handRigLoader.onLoadComplete = function(){
+//     resolve();
+//   };
+// });
 
 //add hand to scene after promise is resolved
-loadHandRigging.then(function() {
-  handRig = hand.getHand();
-  stage.scene.add(handRig.handMesh);  
-  connection = new WebSocket('ws://' + window.location.hostname + ':1337');
-  connection.onmessage = function (message) { 
-    var frameData = JSON.parse(message.data);
-    animateHand.animate(frameData, handRig.handMesh, handRig.fingers); 
-  };
-}, function(err) {
-  console.log(err, "hand rig not loaded in reject");
-});
+// loadHandRigging.then(function() {
+//   handRig = hand.getHand();
+//   stage.scene.add(handRig.handMesh);  
+  
+// }, function(err) {
+//   console.log(err, "hand rig not loaded in reject");
+// });
 
 // function onWindowResize() {
 
@@ -62,4 +58,10 @@ render();
 
 // //window.addEventListener( 'resize', onWindowResize, false );
 
+//frame data from socket server piping in data from elsewhere. 
+// connection = new WebSocket('ws://' + window.location.hostname + ':1337');
+// connection.onmessage = function (message) { 
+//   var frameData = JSON.parse(message.data);
+//   animateHand.animate(frameData, handRig.handMesh, handRig.fingers); 
+// };
 
