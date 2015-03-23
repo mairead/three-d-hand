@@ -1,5 +1,4 @@
 'use strict';
-
 /**
  * @author alteredq / http://alteredqualia.com/
  * @authod mrdoob / http://mrdoob.com/

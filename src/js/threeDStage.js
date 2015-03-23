@@ -27,10 +27,10 @@ exports.createStage = function(){
 	var WIDTH = window.innerWidth; 
 	var HEIGHT = window.innerHeight;
 
-	var VIEW_ANGLE = 10; //was 10
+	var VIEW_ANGLE = 45; //was 10
 	var ASPECT = WIDTH / HEIGHT; 
 	var NEAR = 1;
-	var FAR = 10000;
+	var FAR = 1000;//was 10000
 
 	var renderer = new THREE.WebGLRenderer({antialias:true}); 
 
@@ -52,7 +52,8 @@ exports.createStage = function(){
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	camera.position.set(60, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
+	camera.position.fromArray([0, 160, 400]);
+	//camera.position.set(100, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
 	camera.lookAt( scene.position );
 
 	scene.add(camera);
@@ -73,9 +74,9 @@ exports.createStage = function(){
 	scene.add(light);
 
 	//grid helper
-	gridHelper = new THREE.GridHelper( size, step );	
-	gridHelper.position = new THREE.Vector3( 5, -1, 0 );
-	scene.add(gridHelper);
+	// gridHelper = new THREE.GridHelper( size, step );	
+	// gridHelper.position = new THREE.Vector3( 5, -1, 0 );
+	// scene.add(gridHelper);
 	
 	//geometry
 	geometry = new THREE.TorusGeometry(2, 1, 12, 12);

@@ -3,6 +3,7 @@
 require('es6-promise').polyfill();
 
 var threeDStage = require('./threeDStage.js');
+var leapHandPlugin = require('./leapHandPlugin.js');
 // var orientationController = require('./DeviceOrientationController.js');
 // var hand = require('./hand.js');
 // var animateHand = require('./animateHand.js');
@@ -10,6 +11,7 @@ var threeDStage = require('./threeDStage.js');
 // var handLoader = hand.createHand();  //returns loader async object
 // var handRig;
 var stage = threeDStage.createStage();
+var hands = leapHandPlugin.createHands(stage.scene, stage.renderer, stage.camera);
 // var ctrl = orientationController.DeviceOrientationController;
 // var connection;
 

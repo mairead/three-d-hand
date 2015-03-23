@@ -1032,6 +1032,7 @@ process.chdir = function (dir) {
 require('es6-promise').polyfill();
 
 var threeDStage = require('./threeDStage.js');
+var leapHandPlugin = require('./leapHandPlugin.js');
 // var orientationController = require('./DeviceOrientationController.js');
 // var hand = require('./hand.js');
 // var animateHand = require('./animateHand.js');
@@ -1039,6 +1040,7 @@ var threeDStage = require('./threeDStage.js');
 // var handLoader = hand.createHand();  //returns loader async object
 // var handRig;
 var stage = threeDStage.createStage();
+var hands = leapHandPlugin.createHands(stage.scene, stage.renderer, stage.camera);
 // var ctrl = orientationController.DeviceOrientationController;
 // var connection;
 
@@ -1095,7 +1097,63 @@ render();
 // };
 
 
-},{"./threeDStage.js":4,"es6-promise":2}],4:[function(require,module,exports){
+},{"./leapHandPlugin.js":4,"./threeDStage.js":5,"es6-promise":2}],4:[function(require,module,exports){
+'use strict';
+
+exports.createHands = function(scene, renderer, camera){
+	console.log('leap code goes in here');
+	 var controller, cursor, initScene, riggedHand, stats;
+
+	
+
+
+	window.controller = controller = new Leap.Controller;
+	  controller.use('handHold').use('transform', {
+    position: new THREE.Vector3(1, 0, 0)
+  }).use('handEntry').use('screenPosition').use('riggedHand', {
+    parent: scene,
+    renderer: renderer,
+    scale: null,
+    positionScale: null,
+    helper: true,
+    offset: new THREE.Vector3(0, 0, 0),
+    renderFn: function() {
+      renderer.render(scene, camera);
+      // return controls.update();
+    },
+    materialOptions: {
+      // wireframe: getParam('wireframe')
+    },
+    // dotsMode: getParam('dots'),
+    stats: stats,
+    camera: camera,
+    boneLabels: function(boneMesh, leapHand) {
+      if (boneMesh.name.indexOf('Finger_03') === 0) {
+        return leapHand.pinchStrength;
+      }
+    },
+    boneColors: function(boneMesh, leapHand) {
+      if ((boneMesh.name.indexOf('Finger_0') === 0) || (boneMesh.name.indexOf('Finger_1') === 0)) {
+        return {
+          hue: 0.6,
+          saturation: leapHand.pinchStrength
+        };
+      }
+    },
+    checkWebGL: true
+  }).connect();
+
+  // controller.on('frame', function(frame) {
+  //   var hand, handMesh, screenPosition;
+  //   if (hand = frame.hands[0]) {
+  //     handMesh = frame.hands[0].data('riggedHand.mesh');
+  //     screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera);
+  //     cursor.style.left = screenPosition.x;
+  //     return cursor.style.bottom = screenPosition.y;
+  //   }
+  // });
+};
+},{}],5:[function(require,module,exports){
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left
@@ -1125,10 +1183,10 @@ exports.createStage = function(){
 	var WIDTH = window.innerWidth; 
 	var HEIGHT = window.innerHeight;
 
-	var VIEW_ANGLE = 10; //was 10
+	var VIEW_ANGLE = 45; //was 10
 	var ASPECT = WIDTH / HEIGHT; 
 	var NEAR = 1;
-	var FAR = 10000;
+	var FAR = 1000;//was 10000
 
 	var renderer = new THREE.WebGLRenderer({antialias:true}); 
 
@@ -1150,7 +1208,8 @@ exports.createStage = function(){
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	camera.position.set(60, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
+	camera.position.fromArray([0, 160, 400]);
+	//camera.position.set(100, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
 	camera.lookAt( scene.position );
 
 	scene.add(camera);
@@ -1171,9 +1230,9 @@ exports.createStage = function(){
 	scene.add(light);
 
 	//grid helper
-	gridHelper = new THREE.GridHelper( size, step );	
-	gridHelper.position = new THREE.Vector3( 5, -1, 0 );
-	scene.add(gridHelper);
+	// gridHelper = new THREE.GridHelper( size, step );	
+	// gridHelper.position = new THREE.Vector3( 5, -1, 0 );
+	// scene.add(gridHelper);
 	
 	//geometry
 	geometry = new THREE.TorusGeometry(2, 1, 12, 12);
