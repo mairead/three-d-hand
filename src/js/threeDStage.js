@@ -17,8 +17,8 @@ exports.createStage = function(){
 	var effect; 
 
 	var gridHelper;
-	var size = 10;
-	var step = 1;
+	var size = 100;
+	var step = 10;
 
 	container = document.createElement( 'div' );
 	document.body.appendChild( container );
@@ -27,10 +27,10 @@ exports.createStage = function(){
 	var WIDTH = window.innerWidth; 
 	var HEIGHT = window.innerHeight;
 
-	var VIEW_ANGLE = 45; //was 10
+	var VIEW_ANGLE = 10; //was 10
 	var ASPECT = WIDTH / HEIGHT; 
 	var NEAR = 1;
-	var FAR = 1000;//was 10000
+	var FAR = 10000;//was 10000
 
 	var renderer = new THREE.WebGLRenderer({antialias:true}); 
 
@@ -47,7 +47,7 @@ exports.createStage = function(){
 	
 	effect.setSize(WIDTH, HEIGHT);
 	//nb: can we change separation to calibrate for users
-	effect.separation = 2.5 * 0.0254 / 2; //cardboard 2.5 inches
+	effect.eyeSeparation = 2.5 * 0.0254 / 2; //cardboard 2.5 inches
 
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
@@ -75,21 +75,20 @@ exports.createStage = function(){
 
 	//grid helper
 	gridHelper = new THREE.GridHelper( size, step );	
-
 	//gridHelper.position = new THREE.Vector3( 5, -1, 0 );
 	scene.add(gridHelper);
 	
 	//geometry
-	geometry = new THREE.TorusGeometry(2, 1, 12, 12);
+	geometry = new THREE.TorusGeometry(20, 10, 120, 120);
 	material = new THREE.MeshNormalMaterial( );
 	torus = new THREE.Mesh( geometry, material );
 	
 	//why is torus appearing to left of screen instead of middle?
 	//torus.position.set(100, 3, 0); 
-	torus.position.set(2, 2, 0); 
+	torus.position.set(0, 25, 0); 
 	//moved from (2,2,0) to position items behind camera. This is a hack 
 	//combined with the alpha position to prevent the kalman filter breaking
-	torus.rotation.y += 90;
+	torus.rotation.y += 120;
 
 	scene.add(torus);
 

@@ -1029,77 +1029,193 @@ process.chdir = function (dir) {
 },{"FWaASH":1}],3:[function(require,module,exports){
 'use strict';
 
+var kalman = require('./kalmanFilter.js');
+var kalmanObjects = kalman.kalmanFilter();
+var outputDebugging = require('./outputDebugging.js');
+
+/**
+ * -------
+ * threeVR (https://github.com/richtr/threeVR)
+ * -------
+ *
+ * W3C Device Orientation control (http://www.w3.org/TR/orientation-event/)
+ *
+ * Author: Rich Tibbett (http://github.com/richtr)
+ * License: The MIT License
+ *
+**/
+
+//Note: manual user drag (rotate) and pinch (zoom) override handling
+//removed for ease of use
+
+//Added Kalman filtering to smooth on mobile device
+
+exports.DeviceOrientationController = function ( object, domElement ) {
+
+	this.object = object;
+	this.element = domElement || document;
+
+	this.freeze = true;
+
+	this.useQuaternions = true; // use quaternions for orientation calculation by default
+
+	this.deviceOrientation = {}; //this is the event object or referencing alpha, beta, gamma
+	this.screenOrientation = window.orientation || 0;
+
+	var CONTROLLER_EVENT = {
+		SCREEN_ORIENTATION: 'orientationchange',
+		MANUAL_CONTROL:     'userinteraction', // userinteractionstart, userinteractionend
+		ROTATE_CONTROL:     'rotate'         // rotatestart, rotateend
+	};
+
+	var fireEvent = function () {
+		var eventData;
+
+		return function ( name ) {
+			eventData = arguments || {};
+
+			eventData.type = name;
+			eventData.target = this;
+
+			this.dispatchEvent( eventData );
+		}.bind( this );
+	}.bind( this )();
+
+	this.onDeviceOrientationChange = function ( event ) {
+		this.deviceOrientation = event;
+	}.bind( this );
+
+	this.onScreenOrientationChange = function () {
+		this.screenOrientation = window.orientation || 0;
+		//outputDebugging.showOrientation(window.orientation);
+
+		fireEvent( CONTROLLER_EVENT.SCREEN_ORIENTATION );
+	}.bind( this );
+
+	var createQuaternion = (function () {
+
+		var finalQuaternion = new THREE.Quaternion();
+		var deviceEuler = new THREE.Euler();
+		var screenTransform = new THREE.Quaternion();
+		var worldTransform = new THREE.Quaternion( - Math.sqrt(0.5), 0, 0, Math.sqrt(0.5) ); // - PI/2 around the x-axis
+		var minusHalfAngle = 0;
+ 
+		return function ( alpha, beta, gamma, screenOrientation ) {
+
+			deviceEuler.set( beta, alpha, -gamma, 'YXZ' ); //don't know why Gamma is negative either. It disappears here
+			finalQuaternion.setFromEuler( deviceEuler );
+			minusHalfAngle = - screenOrientation / 2;
+			screenTransform.set( 0, Math.sin( minusHalfAngle ), 0, Math.cos( minusHalfAngle ) );
+			finalQuaternion.multiply( screenTransform );
+			finalQuaternion.multiply( worldTransform ); 
+			//World transform se ems to position it in front, instead of having to look at it upside down
+
+			return finalQuaternion;
+		};
+
+	})();
+
+	this.updateDeviceMove = (function () {
+
+		var deviceQuat = new THREE.Quaternion();
+		var alpha, beta, gamma, orient;
+
+		return function () {
+
+			//alpha hack forces the values into the middle of the 360 degrees of rotation to 
+			//prevent the kalman filter skewing when it hits the 0-360 gap
+			alpha = this.deviceOrientation.alpha;
+			if(alpha > 270){
+				alpha = alpha - 90; //was 180
+			}else if (alpha < 90){
+				alpha = alpha + 90;
+			}
+
+			alpha  = THREE.Math.degToRad( alpha || 0 ); // Z
+			//alpha  = THREE.Math.degToRad( this.deviceOrientation.alpha  || 0 ); // Z'
+			beta   = THREE.Math.degToRad( this.deviceOrientation.beta  || 0 ); // X'
+			gamma  = THREE.Math.degToRad( this.deviceOrientation.gamma || 0 ); // Y''
+			orient = THREE.Math.degToRad( this.screenOrientation       || 0 ); // O
+
+			outputDebugging.showAccelerometer();
+
+			// only process non-zero 3-axis data
+			if ( alpha !== 0 && beta !== 0 && gamma !== 0) {
+
+				kalmanObjects.KO.z_k = $V([alpha, beta, gamma]); 
+	    	kalmanObjects.KM.update(kalmanObjects.KO);
+	    	outputDebugging.kalmanOutput(kalmanObjects.KM.x_k.elements);
+	    	
+	    	//kalman filtered values to smooth interpolation from accelerometer
+	    	alpha = kalmanObjects.KM.x_k.elements[0];
+	    	beta = kalmanObjects.KM.x_k.elements[1];
+	    	gamma = kalmanObjects.KM.x_k.elements[2];
+
+	    	deviceQuat = createQuaternion( alpha, beta, gamma, orient );
+
+				if ( this.freeze ) {
+					return;
+				}
+				this.object.quaternion.copy( deviceQuat );
+			}
+
+		};
+
+	})();
+
+	this.update = function () {
+		this.updateDeviceMove();
+	};
+
+	this.connect = function () {
+
+		window.addEventListener( 'orientationchange', this.onScreenOrientationChange, false );
+		window.addEventListener( 'deviceorientation', this.onDeviceOrientationChange, false );
+		this.freeze = false;
+	};
+
+	this.disconnect = function () {
+		this.freeze = true;
+		window.removeEventListener( 'orientationchange', this.onScreenOrientationChange, false );
+		window.removeEventListener( 'deviceorientation', this.onDeviceOrientationChange, false );
+	};
+
+	this.prototype = Object.create( THREE.EventDispatcher.prototype );
+
+};
+
+
+},{"./kalmanFilter.js":5,"./outputDebugging.js":6}],4:[function(require,module,exports){
+'use strict';
+
 var outputDebugging = require('./outputDebugging.js');
 
 require('es6-promise').polyfill();
 
 var threeDStage = require('./threeDStage.js');
-var leapHandPlugin = require('./leapHandPlugin.js');
-//var orientationController = require('./DeviceOrientationController.js');
-// var hand = require('./hand.js');
-// var animateHand = require('./animateHand.js');
-
-// var handLoader = hand.createHand();  //returns loader async object
-// var handRig;
+// var leapHandPlugin = require('./leapHandPlugin.js');
+var orientationController = require('./DeviceOrientationController.js');
 var stage = threeDStage.createStage();
-
-// console.log(stage)
-// var gl = stage.renderer.getContext();
-// var ext = gl.getExtension("OES_texture_float_linear");
-// if(!ext) {
-//   alert("extension does not exist");
-// }
-
-//var hands = leapHandPlugin.createHands();
-//var ctrl = orientationController.DeviceOrientationController;
+var ctrl = orientationController.DeviceOrientationController;
 // var connection;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
-// stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
-// stage.orientationControls.connect();
-
-//create promise implementation here to call hand loader
-// var loadHandRigging = new Promise(function(resolve){
-//   handLoader.handRigLoader.onLoadComplete = function(){
-//     resolve();
-//   };
-// });
-
-//add hand to scene after promise is resolved
-// loadHandRigging.then(function() {
-//   handRig = hand.getHand();
-//   stage.scene.add(handRig.handMesh);  
-  
-// }, function(err) {
-//   console.log(err, "hand rig not loaded in reject");
-// });
-
-// function onWindowResize() {
-
-//   // windowHalfX = window.innerWidth / 2,
-//   // windowHalfY = window.innerHeight / 2,
-
-//   stage.camera.aspect = window.innerWidth / window.innerHeight;
-//   stage.camera.updateProjectionMatrix();
-
-//   stage.effect.setSize( window.innerWidth, window.innerHeight );
-
-// }
+stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
+stage.orientationControls.connect();
 
 //Render loop runs stage updating and view to cardboard
-// function render() {
-// 	//stage.orientationControls.update();
-// 	//TODO ES6: Destructuring and aliasing in the parameters would
-// 	// clean up the render objects and make them more readable
-//   stage.effect.render( stage.scene, stage.camera );
-//   requestAnimationFrame(render);
-// }
-// render();
+function render() {
+	stage.orientationControls.update();
+	//TODO ES6: Destructuring and aliasing in the parameters would
+	// clean up the render objects and make them more readable
+	stage.renderer.render( stage.scene, stage.camera );
+  requestAnimationFrame(render);
+}
+render();
 
+//stage.effect.render( stage.scene, stage.camera );
 //stage.renderer.render( stage.scene, stage.camera );
-
-//This is calling THREE.js twice? 
 
 window.controller = new Leap.Controller({
   background: true,
@@ -1112,126 +1228,67 @@ controller.use('riggedHand', {
 	stage: stage.camera,
 	renderer: stage.renderer,
 	scene: stage.scene
-	// scale: null,
- //  positionScale: null,
- //  helper: true,
- //  offset: new THREE.Vector3(0, 0, 0),
- //  checkWebGL: true
 });
 
 var RemoteApp = new Peer('remoteApp', {key: 'vg930sy60kck57b9'}); 
 
-var peer = controller.plugins.networking.peer;
+// var peer = controller.plugins.networking.peer;
+// //this wasn't getting triggered because no leap data appeared
+// peer.on('connection', function(conn){
+// 	conn.on('data', function(data){
+// 		//console.log(data)
+// 		//outputDebugging.showLeapData(data.frameData);
+// 	});
+// });
 
-//this wasn't getting triggered because no leap data appeared!
-peer.on('connection', function(conn){
-	conn.on('data', function(data){
-		//console.log(data)
-		//outputDebugging.showLeapData(data.frameData);
-	});
-});
 
-
-},{"./leapHandPlugin.js":4,"./outputDebugging.js":5,"./threeDStage.js":6,"es6-promise":2}],4:[function(require,module,exports){
+},{"./DeviceOrientationController.js":3,"./outputDebugging.js":6,"./threeDStage.js":7,"es6-promise":2}],5:[function(require,module,exports){
 'use strict';
 
-//var outputDebugging = require('./outputDebugging.js');
+exports.kalmanFilter = function(){
 
-exports.createHands = function(scene, renderer, camera){
-	 var controller, riggedHand;
+  var x_0 = $V([0,3,1.5]); //vector. Initial accelerometer values.
+  //These are the base values when the device is held up straight
 
-	// window.controller = controller = new Leap.Controller;
-	 //  controller.use('handHold').use('transform', {
-  //   position: new THREE.Vector3(1, 0, 0)
-  // }).use('handEntry').use('screenPosition').use('riggedHand', {
-  //   parent: scene,
-  //   renderer: renderer,
-  //   scale: null,
-  //   positionScale: null,
-  //   helper: true,
-  //   offset: new THREE.Vector3(0, 0, 0),
-  //   renderFn: function() {
-  //     renderer.render(scene, camera);
-  //   },
-  //   camera: camera,
-  //   checkWebGL: true
-  // }).connect();
+  //P prior knowledge of state
+  var P_0 = $M([
+                [2,0,0],
+                [0,2,0],
+                [0,0,2]
+              ]); //identity matrix. Initial covariance. Set to 1
+  var F_k = $M([
+                [1,0,0],
+                [0,1,0], //0 if interaction is unpredictable
+                [0,0,1]
+              ]); //identity matrix. How change to model is applied. Set to 1 if smooth changes
+  var Q_k = $M([
+                [0,0,0],
+                [0,0,0],
+                [0,0,0]
+              ]); //empty matrix. Noise in system is zero
 
-// controller.connect();
+  var KM = new KalmanModel(x_0,P_0,F_k,Q_k);
 
-// define connection settings
-// var leap = new Leap.Controller({
-//   host: '192.168.1.78',
-//   port: 6437
-// });
+  var z_k = $V([0,3,1.5]); //Updated accelerometer values. Is this amount to correct in each pass? 
+  //var z_k = $V([0,0,0]);
+  var H_k = $M([
+                [1,0,0],
+                [0,1,0],
+                [0,0,1]
+              ]); //identity matrix. Describes relationship between model and observation
+  var R_k = $M([
+                [2,0,0],
+                [0,2,0],
+                [0,0,2]
+              ]); //2x Scalar matrix. Describes noise from sensor. Set to 2 to begin
+  var KO = new KalmanObservation(z_k,H_k,R_k);
 
-// // connect controller
-// leap.connect();
-// outputDebugging.showLeapSocketData("connected");
-
-// Leap.loop(function (frame) {
-//   outputDebugging.showLeapSocketData(frame);
-// });
-
-
-  // var leapConn = new WebSocket("ws://192.168.1.78:6437/v6.json");
-
-  // leapConn.onmessage = function(event){
-  //   var obj = JSON.parse(event.data);
-  //   var str = JSON.stringify(obj, undefined, 2);
-  //   if(obj.id){
-  //       console.log("Frame data for " + obj.id);
-  //   } else {
-  //       console.log("message " + event.data);
-  //   }
-
-   
-  // }
-
-  // leapConn.onclose = function(event){
-  //   console.log(event.code);
-  // }
-  // leapConn.onerror = function(error){
-  //   console.log(error);
-  // }
-
-
-//   //frame data from socket server piping in data from elsewhere. 
-// var connection = new WebSocket('ws://' + window.location.hostname + ':1338');
-
-// connection.onmessage = function (message) { 
-
-//   //won't let me inspect the object here??
-//   //console.log("msg", message.data);
-//   outputDebugging.showLeapData(message.data); 
-//   // var hand, handMesh, screenPosition;
-//   // if (hand = frame.hands[0]) {
-//   //   console.log("hand", frame.hands[0]);
-//   //   handMesh = frame.hands[0].data('riggedHand.mesh');
-//   //   screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera);
-
-//   // }
-
-// };
-
-
-  //need to pipe in frame data here?
-
-  // controller.on('frame', function(frame) {
-  //   // console.log('called', frame)
-  //   var hand, handMesh, screenPosition;
-  //   if (hand = frame.hands[0]) {
-  //     //console.log("hand", frame.hands[0]);
-      
-  //     // handMesh = frame.hands[0].data('riggedHand.mesh');
-  //     // //console.log("mesh in frame controller", handMesh)
-  //     // screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera);
-  //     // cursor.style.left = screenPosition.x;
-  //     // return cursor.style.bottom = screenPosition.y;
-  //   }
-  // });
+  return {
+    KO:KO,
+    KM:KM
+  };
 };
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 'use strict';
 
 exports.kalmanOutput = function(kalman){
@@ -1273,7 +1330,7 @@ exports.showLeapSocketData = function(frameData){
 };
 
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left
@@ -1293,8 +1350,8 @@ exports.createStage = function(){
 	var effect; 
 
 	var gridHelper;
-	var size = 10;
-	var step = 1;
+	var size = 100;
+	var step = 10;
 
 	container = document.createElement( 'div' );
 	document.body.appendChild( container );
@@ -1303,10 +1360,10 @@ exports.createStage = function(){
 	var WIDTH = window.innerWidth; 
 	var HEIGHT = window.innerHeight;
 
-	var VIEW_ANGLE = 45; //was 10
+	var VIEW_ANGLE = 10; //was 10
 	var ASPECT = WIDTH / HEIGHT; 
 	var NEAR = 1;
-	var FAR = 1000;//was 10000
+	var FAR = 10000;//was 10000
 
 	var renderer = new THREE.WebGLRenderer({antialias:true}); 
 
@@ -1323,7 +1380,7 @@ exports.createStage = function(){
 	
 	effect.setSize(WIDTH, HEIGHT);
 	//nb: can we change separation to calibrate for users
-	effect.separation = 2.5 * 0.0254 / 2; //cardboard 2.5 inches
+	effect.eyeSeparation = 2.5 * 0.0254 / 2; //cardboard 2.5 inches
 
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
@@ -1351,21 +1408,20 @@ exports.createStage = function(){
 
 	//grid helper
 	gridHelper = new THREE.GridHelper( size, step );	
-
 	//gridHelper.position = new THREE.Vector3( 5, -1, 0 );
 	scene.add(gridHelper);
 	
 	//geometry
-	geometry = new THREE.TorusGeometry(2, 1, 12, 12);
+	geometry = new THREE.TorusGeometry(20, 10, 120, 120);
 	material = new THREE.MeshNormalMaterial( );
 	torus = new THREE.Mesh( geometry, material );
 	
 	//why is torus appearing to left of screen instead of middle?
 	//torus.position.set(100, 3, 0); 
-	torus.position.set(2, 2, 0); 
+	torus.position.set(0, 25, 0); 
 	//moved from (2,2,0) to position items behind camera. This is a hack 
 	//combined with the alpha position to prevent the kalman filter breaking
-	torus.rotation.y += 90;
+	torus.rotation.y += 120;
 
 	scene.add(torus);
 
@@ -1380,4 +1436,4 @@ exports.createStage = function(){
 	return stageObjects;
 };
 
-},{}]},{},[3])
+},{}]},{},[4])

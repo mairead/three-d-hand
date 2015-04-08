@@ -1300,8 +1300,8 @@ Dialog.warnOutOfDate = function(params){
        return true;
     },
 
-
-    message = "This site requires Leap Motion Tracking V2." +
+    message = "";
+    //message = "This site requires Leap Motion Tracking V2." +
       "<button id='leapjs-accept-upgrade'  style='color: #444; transition: box-shadow 100ms linear; cursor: pointer; vertical-align: baseline; margin-left: 16px;'>Upgrade</button>" +
       "<button id='leapjs-decline-upgrade' style='color: #444; transition: box-shadow 100ms linear; cursor: pointer; vertical-align: baseline; margin-left: 8px; '>Not Now</button>";
 

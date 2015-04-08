@@ -333,9 +333,18 @@ function onReady(handler) {
   }
 
   initScene = function(element) {
+  	console.log("creating new scene")
     var pointLight, scope;
     scope = this;
-    this.scene = new THREE.Scene();
+
+    console.log(scope.scene);
+
+    //need to work out why its not pulling in existing options?
+    if(!scope.scene){this.scene = new THREE.Scene();}
+    else{
+    	this.scene = scope.scene;
+    }
+    
     pointLight = new THREE.PointLight(0xFFffff);
     pointLight.position = new THREE.Vector3(-20, 10, 0);
     pointLight.lookAt(new THREE.Vector3(0, 0, 0));
