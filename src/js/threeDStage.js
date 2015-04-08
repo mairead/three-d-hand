@@ -42,8 +42,8 @@ exports.createStage = function(){
 	renderer.setClearColor( 0xffffff, 1);
 	container.appendChild(renderer.domElement);
 	
-	//effect = new THREE.StereoEffect( renderer );
-	effect = renderer;
+	effect = new THREE.StereoEffect( renderer );
+	//effect = renderer;
 	
 	effect.setSize(WIDTH, HEIGHT);
 	//nb: can we change separation to calibrate for users
@@ -52,8 +52,8 @@ exports.createStage = function(){
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	camera.position.fromArray([0, 160, 400]);
-	//camera.position.set(100, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
+	//camera.position.fromArray([0, 160, 400]);
+	camera.position.set(100, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
 	camera.lookAt( scene.position );
 
 	scene.add(camera);
@@ -74,9 +74,10 @@ exports.createStage = function(){
 	scene.add(light);
 
 	//grid helper
-	// gridHelper = new THREE.GridHelper( size, step );	
-	// gridHelper.position = new THREE.Vector3( 5, -1, 0 );
-	// scene.add(gridHelper);
+	gridHelper = new THREE.GridHelper( size, step );	
+
+	//gridHelper.position = new THREE.Vector3( 5, -1, 0 );
+	scene.add(gridHelper);
 	
 	//geometry
 	geometry = new THREE.TorusGeometry(2, 1, 12, 12);
@@ -95,7 +96,7 @@ exports.createStage = function(){
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {
 		effect: effect,
-		renderer: renderer,
+		renderer: effect,
 		scene: scene,
 		camera: camera
 	};

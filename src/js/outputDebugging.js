@@ -34,3 +34,7 @@ exports.showLeapData = function(frameData){
 	$(".debugger").html("leapdata:" + frameData);
 };
 
+exports.showLeapSocketData = function(frameData){
+	$(".debugger2").html("leap socket:" + frameData);
+};
+

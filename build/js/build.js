@@ -1029,19 +1029,29 @@ process.chdir = function (dir) {
 },{"FWaASH":1}],3:[function(require,module,exports){
 'use strict';
 
+var outputDebugging = require('./outputDebugging.js');
+
 require('es6-promise').polyfill();
 
 var threeDStage = require('./threeDStage.js');
 var leapHandPlugin = require('./leapHandPlugin.js');
-// var orientationController = require('./DeviceOrientationController.js');
+//var orientationController = require('./DeviceOrientationController.js');
 // var hand = require('./hand.js');
 // var animateHand = require('./animateHand.js');
 
 // var handLoader = hand.createHand();  //returns loader async object
 // var handRig;
 var stage = threeDStage.createStage();
-var hands = leapHandPlugin.createHands(stage.scene, stage.renderer, stage.camera);
-// var ctrl = orientationController.DeviceOrientationController;
+
+// console.log(stage)
+// var gl = stage.renderer.getContext();
+// var ext = gl.getExtension("OES_texture_float_linear");
+// if(!ext) {
+//   alert("extension does not exist");
+// }
+
+//var hands = leapHandPlugin.createHands();
+//var ctrl = orientationController.DeviceOrientationController;
 // var connection;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
@@ -1077,83 +1087,193 @@ var hands = leapHandPlugin.createHands(stage.scene, stage.renderer, stage.camera
 
 // }
 
-// Render loop runs stage updating and view to cardboard
-function render() {
-	//stage.orientationControls.update();
-	//TODO ES6: Destructuring and aliasing in the parameters would
-	// clean up the render objects and make them more readable
-  stage.effect.render( stage.scene, stage.camera );
-  requestAnimationFrame(render);
-}
-render();
+//Render loop runs stage updating and view to cardboard
+// function render() {
+// 	//stage.orientationControls.update();
+// 	//TODO ES6: Destructuring and aliasing in the parameters would
+// 	// clean up the render objects and make them more readable
+//   stage.effect.render( stage.scene, stage.camera );
+//   requestAnimationFrame(render);
+// }
+// render();
 
-// //window.addEventListener( 'resize', onWindowResize, false );
+//stage.renderer.render( stage.scene, stage.camera );
 
-//frame data from socket server piping in data from elsewhere. 
-// connection = new WebSocket('ws://' + window.location.hostname + ':1337');
+//This is calling THREE.js twice? 
+
+window.controller = new Leap.Controller({
+  background: true,
+  checkVersion: false
+});
+controller.use('networking', {
+  peer: new Peer({key: 'vg930sy60kck57b9'})
+});
+controller.use('riggedHand', {
+	stage: stage.camera,
+	renderer: stage.renderer,
+	scene: stage.scene
+	// scale: null,
+ //  positionScale: null,
+ //  helper: true,
+ //  offset: new THREE.Vector3(0, 0, 0),
+ //  checkWebGL: true
+});
+
+var RemoteApp = new Peer('remoteApp', {key: 'vg930sy60kck57b9'}); 
+
+var peer = controller.plugins.networking.peer;
+
+//this wasn't getting triggered because no leap data appeared!
+peer.on('connection', function(conn){
+	conn.on('data', function(data){
+		//console.log(data)
+		//outputDebugging.showLeapData(data.frameData);
+	});
+});
+
+
+},{"./leapHandPlugin.js":4,"./outputDebugging.js":5,"./threeDStage.js":6,"es6-promise":2}],4:[function(require,module,exports){
+'use strict';
+
+//var outputDebugging = require('./outputDebugging.js');
+
+exports.createHands = function(scene, renderer, camera){
+	 var controller, riggedHand;
+
+	// window.controller = controller = new Leap.Controller;
+	 //  controller.use('handHold').use('transform', {
+  //   position: new THREE.Vector3(1, 0, 0)
+  // }).use('handEntry').use('screenPosition').use('riggedHand', {
+  //   parent: scene,
+  //   renderer: renderer,
+  //   scale: null,
+  //   positionScale: null,
+  //   helper: true,
+  //   offset: new THREE.Vector3(0, 0, 0),
+  //   renderFn: function() {
+  //     renderer.render(scene, camera);
+  //   },
+  //   camera: camera,
+  //   checkWebGL: true
+  // }).connect();
+
+// controller.connect();
+
+// define connection settings
+// var leap = new Leap.Controller({
+//   host: '192.168.1.78',
+//   port: 6437
+// });
+
+// // connect controller
+// leap.connect();
+// outputDebugging.showLeapSocketData("connected");
+
+// Leap.loop(function (frame) {
+//   outputDebugging.showLeapSocketData(frame);
+// });
+
+
+  // var leapConn = new WebSocket("ws://192.168.1.78:6437/v6.json");
+
+  // leapConn.onmessage = function(event){
+  //   var obj = JSON.parse(event.data);
+  //   var str = JSON.stringify(obj, undefined, 2);
+  //   if(obj.id){
+  //       console.log("Frame data for " + obj.id);
+  //   } else {
+  //       console.log("message " + event.data);
+  //   }
+
+   
+  // }
+
+  // leapConn.onclose = function(event){
+  //   console.log(event.code);
+  // }
+  // leapConn.onerror = function(error){
+  //   console.log(error);
+  // }
+
+
+//   //frame data from socket server piping in data from elsewhere. 
+// var connection = new WebSocket('ws://' + window.location.hostname + ':1338');
+
 // connection.onmessage = function (message) { 
-//   var frameData = JSON.parse(message.data);
-//   animateHand.animate(frameData, handRig.handMesh, handRig.fingers); 
+
+//   //won't let me inspect the object here??
+//   //console.log("msg", message.data);
+//   outputDebugging.showLeapData(message.data); 
+//   // var hand, handMesh, screenPosition;
+//   // if (hand = frame.hands[0]) {
+//   //   console.log("hand", frame.hands[0]);
+//   //   handMesh = frame.hands[0].data('riggedHand.mesh');
+//   //   screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera);
+
+//   // }
+
 // };
 
 
-},{"./leapHandPlugin.js":4,"./threeDStage.js":5,"es6-promise":2}],4:[function(require,module,exports){
-'use strict';
-
-exports.createHands = function(scene, renderer, camera){
-	console.log('leap code goes in here');
-	 var controller, cursor, initScene, riggedHand, stats;
-
-	
-
-
-	window.controller = controller = new Leap.Controller;
-	  controller.use('handHold').use('transform', {
-    position: new THREE.Vector3(1, 0, 0)
-  }).use('handEntry').use('screenPosition').use('riggedHand', {
-    parent: scene,
-    renderer: renderer,
-    scale: null,
-    positionScale: null,
-    helper: true,
-    offset: new THREE.Vector3(0, 0, 0),
-    renderFn: function() {
-      renderer.render(scene, camera);
-      // return controls.update();
-    },
-    materialOptions: {
-      // wireframe: getParam('wireframe')
-    },
-    // dotsMode: getParam('dots'),
-    stats: stats,
-    camera: camera,
-    boneLabels: function(boneMesh, leapHand) {
-      if (boneMesh.name.indexOf('Finger_03') === 0) {
-        return leapHand.pinchStrength;
-      }
-    },
-    boneColors: function(boneMesh, leapHand) {
-      if ((boneMesh.name.indexOf('Finger_0') === 0) || (boneMesh.name.indexOf('Finger_1') === 0)) {
-        return {
-          hue: 0.6,
-          saturation: leapHand.pinchStrength
-        };
-      }
-    },
-    checkWebGL: true
-  }).connect();
+  //need to pipe in frame data here?
 
   // controller.on('frame', function(frame) {
+  //   // console.log('called', frame)
   //   var hand, handMesh, screenPosition;
   //   if (hand = frame.hands[0]) {
-  //     handMesh = frame.hands[0].data('riggedHand.mesh');
-  //     screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera);
-  //     cursor.style.left = screenPosition.x;
-  //     return cursor.style.bottom = screenPosition.y;
+  //     //console.log("hand", frame.hands[0]);
+      
+  //     // handMesh = frame.hands[0].data('riggedHand.mesh');
+  //     // //console.log("mesh in frame controller", handMesh)
+  //     // screenPosition = handMesh.screenPosition(hand.fingers[1].tipPosition, camera);
+  //     // cursor.style.left = screenPosition.x;
+  //     // return cursor.style.bottom = screenPosition.y;
   //   }
   // });
 };
 },{}],5:[function(require,module,exports){
+'use strict';
+
+exports.kalmanOutput = function(kalman){
+	$(".kalman").html("KAL: beta: " +kalman[1].toFixed(6)+", alpha: " +kalman[0].toFixed(6) + ", gamma: " +kalman[2].toFixed(6));
+};
+
+exports.showFlip = function(prevAlpha, currAlpha, diff){
+	$(".debugger").html("prev: " + prevAlpha + "  curr: " + currAlpha + "  diff: " + diff);
+};
+
+exports.showOrientation = function(orientation){
+	$(".debugger").html("orientation:" + orientation);
+};
+
+exports.showAccelerometer = function(){
+	// function getDeviceRotation(e){
+	// //	$(".originals").html('ORIG beta: ' + e.beta.toFixed(6) + ", alpha: " + e.alpha.toFixed(6) + ", gamma: " + e.gamma.toFixed(6));
+		
+	// 	var alpha = THREE.Math.degToRad(e.alpha).toFixed(6); 
+	// 	var beta = THREE.Math.degToRad(e.beta).toFixed(6);
+	// 	var gamma = THREE.Math.degToRad(e.gamma).toFixed(6);
+	
+	// //	$(".accelerometer").html('RADI beta: ' + beta + ", alpha: " + alpha + ", gamma: " + gamma);
+	// }
+
+	// if (window.DeviceOrientationEvent) {
+	//   window.addEventListener('deviceorientation', getDeviceRotation, false);
+	// }else{
+	//   $(".accelerometer").html("NOT SUPPORTED");
+	// }
+};
+
+exports.showLeapData = function(frameData){
+	$(".debugger").html("leapdata:" + frameData);
+};
+
+exports.showLeapSocketData = function(frameData){
+	$(".debugger2").html("leap socket:" + frameData);
+};
+
+
+},{}],6:[function(require,module,exports){
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left
@@ -1198,8 +1318,8 @@ exports.createStage = function(){
 	renderer.setClearColor( 0xffffff, 1);
 	container.appendChild(renderer.domElement);
 	
-	//effect = new THREE.StereoEffect( renderer );
-	effect = renderer;
+	effect = new THREE.StereoEffect( renderer );
+	//effect = renderer;
 	
 	effect.setSize(WIDTH, HEIGHT);
 	//nb: can we change separation to calibrate for users
@@ -1208,8 +1328,8 @@ exports.createStage = function(){
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	camera.position.fromArray([0, 160, 400]);
-	//camera.position.set(100, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
+	//camera.position.fromArray([0, 160, 400]);
+	camera.position.set(100, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
 	camera.lookAt( scene.position );
 
 	scene.add(camera);
@@ -1230,9 +1350,10 @@ exports.createStage = function(){
 	scene.add(light);
 
 	//grid helper
-	// gridHelper = new THREE.GridHelper( size, step );	
-	// gridHelper.position = new THREE.Vector3( 5, -1, 0 );
-	// scene.add(gridHelper);
+	gridHelper = new THREE.GridHelper( size, step );	
+
+	//gridHelper.position = new THREE.Vector3( 5, -1, 0 );
+	scene.add(gridHelper);
 	
 	//geometry
 	geometry = new THREE.TorusGeometry(2, 1, 12, 12);
@@ -1251,7 +1372,7 @@ exports.createStage = function(){
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {
 		effect: effect,
-		renderer: renderer,
+		renderer: effect,
 		scene: scene,
 		camera: camera
 	};

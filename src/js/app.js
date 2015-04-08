@@ -1,18 +1,28 @@
 'use strict';
 
+var outputDebugging = require('./outputDebugging.js');
+
 require('es6-promise').polyfill();
 
 var threeDStage = require('./threeDStage.js');
 var leapHandPlugin = require('./leapHandPlugin.js');
-// var orientationController = require('./DeviceOrientationController.js');
+//var orientationController = require('./DeviceOrientationController.js');
 // var hand = require('./hand.js');
 // var animateHand = require('./animateHand.js');
 
 // var handLoader = hand.createHand();  //returns loader async object
 // var handRig;
 var stage = threeDStage.createStage();
-var hands = leapHandPlugin.createHands(stage.scene, stage.renderer, stage.camera);
-// var ctrl = orientationController.DeviceOrientationController;
+
+// console.log(stage)
+// var gl = stage.renderer.getContext();
+// var ext = gl.getExtension("OES_texture_float_linear");
+// if(!ext) {
+//   alert("extension does not exist");
+// }
+
+//var hands = leapHandPlugin.createHands();
+//var ctrl = orientationController.DeviceOrientationController;
 // var connection;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
@@ -48,22 +58,47 @@ var hands = leapHandPlugin.createHands(stage.scene, stage.renderer, stage.camera
 
 // }
 
-// Render loop runs stage updating and view to cardboard
-function render() {
-	//stage.orientationControls.update();
-	//TODO ES6: Destructuring and aliasing in the parameters would
-	// clean up the render objects and make them more readable
-  stage.effect.render( stage.scene, stage.camera );
-  requestAnimationFrame(render);
-}
-render();
+//Render loop runs stage updating and view to cardboard
+// function render() {
+// 	//stage.orientationControls.update();
+// 	//TODO ES6: Destructuring and aliasing in the parameters would
+// 	// clean up the render objects and make them more readable
+//   stage.effect.render( stage.scene, stage.camera );
+//   requestAnimationFrame(render);
+// }
+// render();
 
-// //window.addEventListener( 'resize', onWindowResize, false );
+//stage.renderer.render( stage.scene, stage.camera );
 
-//frame data from socket server piping in data from elsewhere. 
-// connection = new WebSocket('ws://' + window.location.hostname + ':1337');
-// connection.onmessage = function (message) { 
-//   var frameData = JSON.parse(message.data);
-//   animateHand.animate(frameData, handRig.handMesh, handRig.fingers); 
-// };
+//This is calling THREE.js twice? 
+
+window.controller = new Leap.Controller({
+  background: true,
+  checkVersion: false
+});
+controller.use('networking', {
+  peer: new Peer({key: 'vg930sy60kck57b9'})
+});
+controller.use('riggedHand', {
+	stage: stage.camera,
+	renderer: stage.renderer,
+	scene: stage.scene
+	// scale: null,
+ //  positionScale: null,
+ //  helper: true,
+ //  offset: new THREE.Vector3(0, 0, 0),
+ //  checkWebGL: true
+});
+
+var RemoteApp = new Peer('remoteApp', {key: 'vg930sy60kck57b9'}); 
+
+var peer = controller.plugins.networking.peer;
+
+//this wasn't getting triggered because no leap data appeared!
+peer.on('connection', function(conn){
+	conn.on('data', function(data){
+		//console.log(data)
+		//outputDebugging.showLeapData(data.frameData);
+	});
+});
 
