@@ -333,11 +333,8 @@ function onReady(handler) {
   }
 
   initScene = function(element) {
-  	console.log("creating new scene")
     var pointLight, scope;
     scope = this;
-
-    console.log(scope.scene);
 
     //need to work out why its not pulling in existing options?
     if(!scope.scene){this.scene = new THREE.Scene();}
@@ -367,11 +364,13 @@ function onReady(handler) {
         scope.camera.aspect = window.innerWidth / window.innerHeight;
         scope.camera.updateProjectionMatrix();
         scope.renderer.setSize(window.innerWidth, window.innerHeight);
-        return scope.renderer.render(scope.scene, scope.camera);
+        return scope.effect.render(scope.scene, scope.camera);
+        //return scope.renderer.render(scope.scene, scope.camera);
       }, false);
     }
     scope.scene.add(scope.camera);
-    return scope.renderer.render(scope.scene, scope.camera);
+    return scope.effect.render(scope.scene, scope.camera);
+    //return scope.renderer.render(scope.scene, scope.camera);
   };
 
   Leap.plugin('riggedHand', function(scope) {
@@ -407,7 +406,8 @@ function onReady(handler) {
     }
     if (scope.renderFn === void 0) {
       scope.renderFn = function() {
-        return scope.renderer.render(scope.scene, scope.camera);
+      	return scope.effect.render(scope.scene, scope.camera);
+        //return scope.renderer.render(scope.scene, scope.camera);
       };
     }
     spareMeshes = {

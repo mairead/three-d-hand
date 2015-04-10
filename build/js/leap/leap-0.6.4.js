@@ -14,9 +14,9 @@ var Pointable = require('./pointable'),
   , mat4 = glMatrix.mat4
   , _ = require('underscore');
 
-
 var Bone = module.exports = function(finger, data) {
   this.finger = finger;
+  console.log("bone?")
 
   this._center = null, this._matrix = null;
 
@@ -1380,6 +1380,7 @@ var Pointable = require('./pointable'),
 * property.
 */
 var Finger = module.exports = function(data) {
+
   Pointable.call(this, data); // use pointable as super-constructor
   
   /**
@@ -1473,6 +1474,7 @@ var Finger = module.exports = function(data) {
   * @memberof Leap.Finger.prototype
   */
   this.positions = [this.carpPosition, this.mcpPosition, this.pipPosition, this.dipPosition, this.tipPosition];
+
 
   if (data.bases){
     this.addBones(data);
@@ -3046,6 +3048,7 @@ module.exports = {
    * ```
    */
   loop: function(opts, callback) {
+
     if (opts && callback === undefined &&  ( ({}).toString.call(opts) === '[object Function]' ) ) {
       callback = opts;
       opts = {};

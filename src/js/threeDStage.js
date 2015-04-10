@@ -95,7 +95,7 @@ exports.createStage = function(){
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {
 		effect: effect,
-		renderer: effect,
+		renderer: renderer,
 		scene: scene,
 		camera: camera
 	};
