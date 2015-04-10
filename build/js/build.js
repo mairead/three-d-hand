@@ -1188,7 +1188,7 @@ exports.DeviceOrientationController = function ( object, domElement ) {
 },{"./kalmanFilter.js":5,"./outputDebugging.js":6}],4:[function(require,module,exports){
 'use strict';
 
-var outputDebugging = require('./outputDebugging.js');
+//var outputDebugging = require('./outputDebugging.js');
 
 require('es6-promise').polyfill();
 
@@ -1221,17 +1221,17 @@ window.controller = new Leap.Controller({
   background: true,
   checkVersion: true
 });
-controller.use('networking', {
+window.controller.use('networking', {
   peer: new Peer({key: 'vg930sy60kck57b9'})
 });
-controller.use('riggedHand', {
+window.controller.use('riggedHand', {
 	stage: stage.camera,
 	renderer: stage.renderer,
 	scene: stage.scene,
 	effect: stage.effect
 });
 
-var RemoteApp = new Peer('remoteApp', {key: 'vg930sy60kck57b9'}); 
+new Peer('remoteApp', {key: 'vg930sy60kck57b9'}); 
 
 // var peer = controller.plugins.networking.peer;
 // //this wasn't getting triggered because no leap data appeared
@@ -1243,7 +1243,7 @@ var RemoteApp = new Peer('remoteApp', {key: 'vg930sy60kck57b9'});
 // });
 
 
-},{"./DeviceOrientationController.js":3,"./outputDebugging.js":6,"./threeDStage.js":7,"es6-promise":2}],5:[function(require,module,exports){
+},{"./DeviceOrientationController.js":3,"./threeDStage.js":7,"es6-promise":2}],5:[function(require,module,exports){
 'use strict';
 
 exports.kalmanFilter = function(){

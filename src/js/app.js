@@ -1,6 +1,6 @@
 'use strict';
 
-var outputDebugging = require('./outputDebugging.js');
+//var outputDebugging = require('./outputDebugging.js');
 
 require('es6-promise').polyfill();
 
@@ -33,17 +33,17 @@ window.controller = new Leap.Controller({
   background: true,
   checkVersion: true
 });
-controller.use('networking', {
+window.controller.use('networking', {
   peer: new Peer({key: 'vg930sy60kck57b9'})
 });
-controller.use('riggedHand', {
+window.controller.use('riggedHand', {
 	stage: stage.camera,
 	renderer: stage.renderer,
 	scene: stage.scene,
 	effect: stage.effect
 });
 
-var RemoteApp = new Peer('remoteApp', {key: 'vg930sy60kck57b9'}); 
+new Peer('remoteApp', {key: 'vg930sy60kck57b9'}); 
 
 // var peer = controller.plugins.networking.peer;
 // //this wasn't getting triggered because no leap data appeared

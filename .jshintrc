@@ -38,6 +38,7 @@
     "$V": true,
     "$": true,
     "THREE": true,
-    "Leap": true
+    "Leap": true,
+    "Peer": true
   }
 }
