@@ -16,7 +16,6 @@ var Pointable = require('./pointable'),
 
 var Bone = module.exports = function(finger, data) {
   this.finger = finger;
-  console.log("bone?")
 
   this._center = null, this._matrix = null;
 
@@ -1572,6 +1571,9 @@ var Hand = require("./hand")
  * Access Frame objects using the [Controller.frame]{@link Leap.Controller#frame}() function.
  */
 var Frame = module.exports = function(data) {
+
+  //thinks hands array is empty
+  //console.log('frame', data)
   /**
    * Reports whether this Frame instance is valid.
    *
