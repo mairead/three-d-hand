@@ -39,9 +39,9 @@ var stage = threeDStage.createStage();
 
 
 
-var deviceCtrl = require = require('./DeviceOrientationControls.js');
-deviceCtrl.createControls();
-var controls = new THREE.DeviceOrientationControls( stage.camera );
+// var deviceCtrl = require = require('./DeviceOrientationControls.js');
+// deviceCtrl.createControls();
+// var controls = new THREE.DeviceOrientationControls( stage.camera );
 
 
 window.controller = new Leap.Controller({

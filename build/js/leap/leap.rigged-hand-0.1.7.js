@@ -337,8 +337,6 @@ function onReady(handler) {
     var pointLight, scope;
     scope = this;
 
-    
-
     //need to work out why its not pulling in existing options?
     if(!scope.scene){this.scene = new THREE.Scene();}
     else{

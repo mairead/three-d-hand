@@ -5,8 +5,9 @@
  * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
  */
 
+
 THREE.DeviceOrientationControls = function ( object ) {
-	var flag = 0;
+
 	var scope = this;
 
 	this.object = object;
@@ -77,7 +78,6 @@ THREE.DeviceOrientationControls = function ( object ) {
 
 	this.update = function () {
 
-
 		if ( scope.enabled === false ) return;
 
 		var alpha  = scope.deviceOrientation.alpha ? THREE.Math.degToRad( scope.deviceOrientation.alpha ) : 0; // Z
@@ -85,13 +85,7 @@ THREE.DeviceOrientationControls = function ( object ) {
 		var gamma  = scope.deviceOrientation.gamma ? THREE.Math.degToRad( scope.deviceOrientation.gamma ) : 0; // Y''
 		var orient = scope.screenOrientation       ? THREE.Math.degToRad( scope.screenOrientation       ) : 0; // O
 
-		if(flag === 0){
-			console.log(alpha, beta, gamma)
-			flag = 1;			
-		}
-
-
-		//console.log("pre", alpha, beta, gamma);
+		console.log("pre", alpha, beta, gamma);
 		KO.z_k = $V([alpha, beta, gamma]); 
 		KM.update(KO);
 
@@ -100,7 +94,7 @@ THREE.DeviceOrientationControls = function ( object ) {
 		beta = KM.x_k.elements[1];
 		gamma = KM.x_k.elements[2];
 
-		//console.log("pos", alpha, beta, gamma);
+		console.log("pos", alpha, beta, gamma);
 		setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
 
 	};

@@ -1,6 +1,6 @@
 'use strict';
 
-exports.kalmanFilter = function(){
+
 
   var x_0 = $V([0,3,1.5]); //vector. Initial accelerometer values.
   //These are the base values when the device is held up straight
@@ -38,8 +38,3 @@ exports.kalmanFilter = function(){
               ]); //2x Scalar matrix. Describes noise from sensor. Set to 2 to begin
   var KO = new KalmanObservation(z_k,H_k,R_k);
 
-  return {
-    KO:KO,
-    KM:KM
-  };
-};
