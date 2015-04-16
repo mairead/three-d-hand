@@ -1,20 +1,27 @@
 'use strict';
 
+
+
 //var outputDebugging = require('./outputDebugging.js');
 
 require('es6-promise').polyfill();
 
 var threeDStage = require('./threeDStage.js');
 // var leapHandPlugin = require('./leapHandPlugin.js');
-var orientationController = require('./DeviceOrientationController.js');
+// var orientationController = require('./DeviceOrientationController.js');
 var stage = threeDStage.createStage();
-var ctrl = orientationController.DeviceOrientationController;
+
+
+// var deviceCtrl = require = require('./DeviceOrientationControls.js');
+// deviceCtrl.createControls();
+// var controls = new THREE.DeviceOrientationControls( stage.camera );
+//var ctrl = orientationController.DeviceOrientationController;
 // var connection;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
-stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
-stage.orientationControls.connect();
+//stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
+//stage.orientationControls.connect();
 
 //Render loop runs stage updating and view to cardboard
 // function render() {
@@ -28,6 +35,14 @@ stage.orientationControls.connect();
 
 //stage.effect.render( stage.scene, stage.camera );
 //stage.renderer.render( stage.scene, stage.camera );
+
+
+
+
+var deviceCtrl = require = require('./DeviceOrientationControls.js');
+deviceCtrl.createControls();
+var controls = new THREE.DeviceOrientationControls( stage.camera );
+
 
 window.controller = new Leap.Controller({
   background: true,

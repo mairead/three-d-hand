@@ -1027,166 +1027,108 @@ process.chdir = function (dir) {
 }).call(this);
 }).call(this,require("FWaASH"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"FWaASH":1}],3:[function(require,module,exports){
-'use strict';
-
-var kalman = require('./kalmanFilter.js');
-var kalmanObjects = kalman.kalmanFilter();
-var outputDebugging = require('./outputDebugging.js');
-
 /**
- * -------
- * threeVR (https://github.com/richtr/threeVR)
- * -------
+ * @author richt / http://richt.me
+ * @author WestLangley / http://github.com/WestLangley
  *
- * W3C Device Orientation control (http://www.w3.org/TR/orientation-event/)
- *
- * Author: Rich Tibbett (http://github.com/richtr)
- * License: The MIT License
- *
-**/
+ * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
+ */
 
-//Note: manual user drag (rotate) and pinch (zoom) override handling
-//removed for ease of use
+exports.createControls = function () {
 
-//Added Kalman filtering to smooth on mobile device
+	THREE.DeviceOrientationControls = function ( object ) {
 
-exports.DeviceOrientationController = function ( object, domElement ) {
+		var scope = this;
 
-	this.object = object;
-	this.element = domElement || document;
+		this.object = object;
+		this.object.rotation.reorder( "YXZ" );
 
-	this.freeze = true;
+		this.enabled = true;
 
-	this.useQuaternions = true; // use quaternions for orientation calculation by default
+		this.deviceOrientation = {};
+		this.screenOrientation = 0;
 
-	this.deviceOrientation = {}; //this is the event object or referencing alpha, beta, gamma
-	this.screenOrientation = window.orientation || 0;
+		var onDeviceOrientationChangeEvent = function ( event ) {
 
-	var CONTROLLER_EVENT = {
-		SCREEN_ORIENTATION: 'orientationchange',
-		MANUAL_CONTROL:     'userinteraction', // userinteractionstart, userinteractionend
-		ROTATE_CONTROL:     'rotate'         // rotatestart, rotateend
-	};
-
-	var fireEvent = function () {
-		var eventData;
-
-		return function ( name ) {
-			eventData = arguments || {};
-
-			eventData.type = name;
-			eventData.target = this;
-
-			this.dispatchEvent( eventData );
-		}.bind( this );
-	}.bind( this )();
-
-	this.onDeviceOrientationChange = function ( event ) {
-		this.deviceOrientation = event;
-	}.bind( this );
-
-	this.onScreenOrientationChange = function () {
-		this.screenOrientation = window.orientation || 0;
-		//outputDebugging.showOrientation(window.orientation);
-
-		fireEvent( CONTROLLER_EVENT.SCREEN_ORIENTATION );
-	}.bind( this );
-
-	var createQuaternion = (function () {
-
-		var finalQuaternion = new THREE.Quaternion();
-		var deviceEuler = new THREE.Euler();
-		var screenTransform = new THREE.Quaternion();
-		var worldTransform = new THREE.Quaternion( - Math.sqrt(0.5), 0, 0, Math.sqrt(0.5) ); // - PI/2 around the x-axis
-		var minusHalfAngle = 0;
- 
-		return function ( alpha, beta, gamma, screenOrientation ) {
-
-			deviceEuler.set( beta, alpha, -gamma, 'YXZ' ); //don't know why Gamma is negative either. It disappears here
-			finalQuaternion.setFromEuler( deviceEuler );
-			minusHalfAngle = - screenOrientation / 2;
-			screenTransform.set( 0, Math.sin( minusHalfAngle ), 0, Math.cos( minusHalfAngle ) );
-			finalQuaternion.multiply( screenTransform );
-			finalQuaternion.multiply( worldTransform ); 
-			//World transform se ems to position it in front, instead of having to look at it upside down
-
-			return finalQuaternion;
-		};
-
-	})();
-
-	this.updateDeviceMove = (function () {
-
-		var deviceQuat = new THREE.Quaternion();
-		var alpha, beta, gamma, orient;
-
-		return function () {
-
-			//alpha hack forces the values into the middle of the 360 degrees of rotation to 
-			//prevent the kalman filter skewing when it hits the 0-360 gap
-			alpha = this.deviceOrientation.alpha;
-			if(alpha > 270){
-				alpha = alpha - 90; //was 180
-			}else if (alpha < 90){
-				alpha = alpha + 90;
-			}
-
-			alpha  = THREE.Math.degToRad( alpha || 0 ); // Z
-			//alpha  = THREE.Math.degToRad( this.deviceOrientation.alpha  || 0 ); // Z'
-			beta   = THREE.Math.degToRad( this.deviceOrientation.beta  || 0 ); // X'
-			gamma  = THREE.Math.degToRad( this.deviceOrientation.gamma || 0 ); // Y''
-			orient = THREE.Math.degToRad( this.screenOrientation       || 0 ); // O
-
-			outputDebugging.showAccelerometer();
-
-			// only process non-zero 3-axis data
-			if ( alpha !== 0 && beta !== 0 && gamma !== 0) {
-
-				kalmanObjects.KO.z_k = $V([alpha, beta, gamma]); 
-	    	kalmanObjects.KM.update(kalmanObjects.KO);
-	    	outputDebugging.kalmanOutput(kalmanObjects.KM.x_k.elements);
-	    	
-	    	//kalman filtered values to smooth interpolation from accelerometer
-	    	alpha = kalmanObjects.KM.x_k.elements[0];
-	    	beta = kalmanObjects.KM.x_k.elements[1];
-	    	gamma = kalmanObjects.KM.x_k.elements[2];
-
-	    	deviceQuat = createQuaternion( alpha, beta, gamma, orient );
-
-				if ( this.freeze ) {
-					return;
-				}
-				this.object.quaternion.copy( deviceQuat );
-			}
+			scope.deviceOrientation = event;
 
 		};
 
-	})();
+		var onScreenOrientationChangeEvent = function () {
 
-	this.update = function () {
-		this.updateDeviceMove();
+			scope.screenOrientation = window.orientation || 0;
+
+		};
+
+		// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
+
+		var setObjectQuaternion = function () {
+
+			var zee = new THREE.Vector3( 0, 0, 1 );
+
+			var euler = new THREE.Euler();
+
+			var q0 = new THREE.Quaternion();
+
+			var q1 = new THREE.Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 around the x-axis
+
+			return function ( quaternion, alpha, beta, gamma, orient ) {
+
+				euler.set( beta, alpha, - gamma, 'YXZ' );                       // 'ZXY' for the device, but 'YXZ' for us
+
+				quaternion.setFromEuler( euler );                               // orient the device
+
+				quaternion.multiply( q1 );                                      // camera looks out the back of the device, not the top
+
+				quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) );    // adjust for screen orientation
+
+			}
+
+		}();
+
+		this.connect = function() {
+
+			onScreenOrientationChangeEvent(); // run once on load
+
+			window.addEventListener( 'orientationchange', onScreenOrientationChangeEvent, false );
+			window.addEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
+
+			scope.enabled = true;
+
+		};
+
+		this.disconnect = function() {
+
+			window.removeEventListener( 'orientationchange', onScreenOrientationChangeEvent, false );
+			window.removeEventListener( 'deviceorientation', onDeviceOrientationChangeEvent, false );
+
+			scope.enabled = false;
+
+		};
+
+		this.update = function () {
+
+			if ( scope.enabled === false ) return;
+
+			var alpha  = scope.deviceOrientation.alpha ? THREE.Math.degToRad( scope.deviceOrientation.alpha ) : 0; // Z
+			var beta   = scope.deviceOrientation.beta  ? THREE.Math.degToRad( scope.deviceOrientation.beta  ) : 0; // X'
+			var gamma  = scope.deviceOrientation.gamma ? THREE.Math.degToRad( scope.deviceOrientation.gamma ) : 0; // Y''
+			var orient = scope.screenOrientation       ? THREE.Math.degToRad( scope.screenOrientation       ) : 0; // O
+
+			setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
+
+		};
+
+		this.connect();
+
 	};
-
-	this.connect = function () {
-
-		window.addEventListener( 'orientationchange', this.onScreenOrientationChange, false );
-		window.addEventListener( 'deviceorientation', this.onDeviceOrientationChange, false );
-		this.freeze = false;
-	};
-
-	this.disconnect = function () {
-		this.freeze = true;
-		window.removeEventListener( 'orientationchange', this.onScreenOrientationChange, false );
-		window.removeEventListener( 'deviceorientation', this.onDeviceOrientationChange, false );
-	};
-
-	this.prototype = Object.create( THREE.EventDispatcher.prototype );
 
 };
 
-
-},{"./kalmanFilter.js":5,"./outputDebugging.js":6}],4:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 'use strict';
+
+
 
 //var outputDebugging = require('./outputDebugging.js');
 
@@ -1194,15 +1136,20 @@ require('es6-promise').polyfill();
 
 var threeDStage = require('./threeDStage.js');
 // var leapHandPlugin = require('./leapHandPlugin.js');
-var orientationController = require('./DeviceOrientationController.js');
+// var orientationController = require('./DeviceOrientationController.js');
 var stage = threeDStage.createStage();
-var ctrl = orientationController.DeviceOrientationController;
+
+
+// var deviceCtrl = require = require('./DeviceOrientationControls.js');
+// deviceCtrl.createControls();
+// var controls = new THREE.DeviceOrientationControls( stage.camera );
+//var ctrl = orientationController.DeviceOrientationController;
 // var connection;
 
 //TODO ES6: Would destructuring help recuce the footprint of this 
 //method call and keep it in 80 chars 
-stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
-stage.orientationControls.connect();
+//stage.orientationControls = new ctrl( stage.camera, stage.renderer.domElement );
+//stage.orientationControls.connect();
 
 //Render loop runs stage updating and view to cardboard
 // function render() {
@@ -1216,6 +1163,14 @@ stage.orientationControls.connect();
 
 //stage.effect.render( stage.scene, stage.camera );
 //stage.renderer.render( stage.scene, stage.camera );
+
+
+
+
+var deviceCtrl = require = require('./DeviceOrientationControls.js');
+deviceCtrl.createControls();
+var controls = new THREE.DeviceOrientationControls( stage.camera );
+
 
 window.controller = new Leap.Controller({
   background: true,
@@ -1243,95 +1198,7 @@ new Peer('remoteApp', {key: 'vg930sy60kck57b9'});
 // });
 
 
-},{"./DeviceOrientationController.js":3,"./threeDStage.js":7,"es6-promise":2}],5:[function(require,module,exports){
-'use strict';
-
-exports.kalmanFilter = function(){
-
-  var x_0 = $V([0,3,1.5]); //vector. Initial accelerometer values.
-  //These are the base values when the device is held up straight
-
-  //P prior knowledge of state
-  var P_0 = $M([
-                [2,0,0],
-                [0,2,0],
-                [0,0,2]
-              ]); //identity matrix. Initial covariance. Set to 1
-  var F_k = $M([
-                [1,0,0],
-                [0,1,0], //0 if interaction is unpredictable
-                [0,0,1]
-              ]); //identity matrix. How change to model is applied. Set to 1 if smooth changes
-  var Q_k = $M([
-                [0,0,0],
-                [0,0,0],
-                [0,0,0]
-              ]); //empty matrix. Noise in system is zero
-
-  var KM = new KalmanModel(x_0,P_0,F_k,Q_k);
-
-  var z_k = $V([0,3,1.5]); //Updated accelerometer values. Is this amount to correct in each pass? 
-  //var z_k = $V([0,0,0]);
-  var H_k = $M([
-                [1,0,0],
-                [0,1,0],
-                [0,0,1]
-              ]); //identity matrix. Describes relationship between model and observation
-  var R_k = $M([
-                [2,0,0],
-                [0,2,0],
-                [0,0,2]
-              ]); //2x Scalar matrix. Describes noise from sensor. Set to 2 to begin
-  var KO = new KalmanObservation(z_k,H_k,R_k);
-
-  return {
-    KO:KO,
-    KM:KM
-  };
-};
-},{}],6:[function(require,module,exports){
-'use strict';
-
-exports.kalmanOutput = function(kalman){
-	$(".kalman").html("KAL: beta: " +kalman[1].toFixed(6)+", alpha: " +kalman[0].toFixed(6) + ", gamma: " +kalman[2].toFixed(6));
-};
-
-exports.showFlip = function(prevAlpha, currAlpha, diff){
-	$(".debugger").html("prev: " + prevAlpha + "  curr: " + currAlpha + "  diff: " + diff);
-};
-
-exports.showOrientation = function(orientation){
-	$(".debugger").html("orientation:" + orientation);
-};
-
-exports.showAccelerometer = function(){
-	// function getDeviceRotation(e){
-	// //	$(".originals").html('ORIG beta: ' + e.beta.toFixed(6) + ", alpha: " + e.alpha.toFixed(6) + ", gamma: " + e.gamma.toFixed(6));
-		
-	// 	var alpha = THREE.Math.degToRad(e.alpha).toFixed(6); 
-	// 	var beta = THREE.Math.degToRad(e.beta).toFixed(6);
-	// 	var gamma = THREE.Math.degToRad(e.gamma).toFixed(6);
-	
-	// //	$(".accelerometer").html('RADI beta: ' + beta + ", alpha: " + alpha + ", gamma: " + gamma);
-	// }
-
-	// if (window.DeviceOrientationEvent) {
-	//   window.addEventListener('deviceorientation', getDeviceRotation, false);
-	// }else{
-	//   $(".accelerometer").html("NOT SUPPORTED");
-	// }
-};
-
-exports.showLeapData = function(frameData){
-	$(".debugger").html("leapdata:" + frameData);
-};
-
-exports.showLeapSocketData = function(frameData){
-	$(".debugger2").html("leap socket:" + frameData);
-};
-
-
-},{}],7:[function(require,module,exports){
+},{"./DeviceOrientationControls.js":3,"./threeDStage.js":5,"es6-promise":2}],5:[function(require,module,exports){
 'use strict';
 
 //TODO ES6: Add default param unless right hand specified to point left

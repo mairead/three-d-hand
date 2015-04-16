@@ -5,6 +5,7 @@
  * @author mr.doob / http://mrdoob.com/
  */
 
+
 var Detector = {
 
 	canvas: !! window.CanvasRenderingContext2D,
@@ -336,6 +337,8 @@ function onReady(handler) {
     var pointLight, scope;
     scope = this;
 
+    
+
     //need to work out why its not pulling in existing options?
     if(!scope.scene){this.scene = new THREE.Scene();}
     else{
@@ -349,6 +352,8 @@ function onReady(handler) {
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
     this.camera.position.fromArray([0, 160, 400]);
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+    //create controls after camera is created
+    //scope.controls = new THREE.DeviceOrientationControls( this.camera );
     if (!this.renderer) {
       this.renderer = new THREE.WebGLRenderer({
         alpha: true
@@ -406,6 +411,7 @@ function onReady(handler) {
     }
     if (scope.renderFn === void 0) {
       scope.renderFn = function() {
+      	//scope.controls.update();
       	return scope.effect.render(scope.scene, scope.camera);
         //return scope.renderer.render(scope.scene, scope.camera);
       };
