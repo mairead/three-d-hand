@@ -353,7 +353,7 @@ function onReady(handler) {
     this.camera.position.fromArray([0, 160, 400]);
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     //create controls after camera is created
-    //scope.controls = new THREE.DeviceOrientationControls( this.camera );
+    scope.controls = new THREE.DeviceOrientationControls( this.camera );
     if (!this.renderer) {
       this.renderer = new THREE.WebGLRenderer({
         alpha: true
@@ -411,7 +411,7 @@ function onReady(handler) {
     }
     if (scope.renderFn === void 0) {
       scope.renderFn = function() {
-      	//scope.controls.update();
+      	scope.controls.update();
       	return scope.effect.render(scope.scene, scope.camera);
         //return scope.renderer.render(scope.scene, scope.camera);
       };
