@@ -1,7 +1,5 @@
 'use strict';
 
-
-
 //var outputDebugging = require('./outputDebugging.js');
 
 require('es6-promise').polyfill();
@@ -68,4 +66,3 @@ new Peer('remoteApp', {key: 'vg930sy60kck57b9'});
 // 		//outputDebugging.showLeapData(data.frameData);
 // 	});
 // });
-

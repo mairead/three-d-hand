@@ -80,15 +80,19 @@ THREE.DeviceOrientationControls = function ( object ) {
 
 		if ( scope.enabled === false ) return;
 
+		//$(".originals").html("ORI: alpha: " + scope.deviceOrientation.alpha.toFixed(6) + ",  beta " + scope.deviceOrientation.beta.toFixed(6) + ", gamma: " + scope.deviceOrientation.gamma.toFixed(6));
+
 		var alpha  = scope.deviceOrientation.alpha ? THREE.Math.degToRad( scope.deviceOrientation.alpha ) : 0; // Z
 		var beta   = scope.deviceOrientation.beta  ? THREE.Math.degToRad( scope.deviceOrientation.beta  ) : 0; // X'
 		var gamma  = scope.deviceOrientation.gamma ? THREE.Math.degToRad( scope.deviceOrientation.gamma ) : 0; // Y''
 		var orient = scope.screenOrientation       ? THREE.Math.degToRad( scope.screenOrientation       ) : 0; // O
 
-		if(flag === 0){
-			console.log(alpha, beta, gamma)
-			flag = 1;			
-		}
+		// if(flag === 0){
+		// 	console.log(alpha, beta, gamma)
+		// 	flag = 1;			
+		// }
+
+		//$(".accelerometer").html("RAD: alpha: " + alpha.toFixed(6) + ", beta: " + beta.toFixed(6) + ", gamma: " + gamma.toFixed(6) );
 
 
 		//console.log("pre", alpha, beta, gamma);
@@ -96,17 +100,19 @@ THREE.DeviceOrientationControls = function ( object ) {
 		KM.update(KO);
 
 		//kalman filtered values to smooth interpolation from accelerometer
-		alpha = KM.x_k.elements[0];
-		beta = KM.x_k.elements[1];
-		gamma = KM.x_k.elements[2];
+		// alpha = KM.x_k.elements[0];
+		// beta = KM.x_k.elements[1];
+		// gamma = KM.x_k.elements[2];
 
+		//$(".kalman").html("KAL: alpha: " + alpha.toFixed(6) + ", beta: " + beta.toFixed(6) + ", gamma: " + gamma.toFixed(6) );
+
+
+		//confusion in the alpha channel
 		//console.log("pos", alpha, beta, gamma);
 		setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
 
 	};
-
 	this.connect();
-
 };
 
 

@@ -1029,8 +1029,6 @@ process.chdir = function (dir) {
 },{"FWaASH":1}],3:[function(require,module,exports){
 'use strict';
 
-
-
 //var outputDebugging = require('./outputDebugging.js');
 
 require('es6-promise').polyfill();
@@ -1097,7 +1095,6 @@ new Peer('remoteApp', {key: 'vg930sy60kck57b9'});
 // 		//outputDebugging.showLeapData(data.frameData);
 // 	});
 // });
-
 
 },{"./threeDStage.js":4,"es6-promise":2}],4:[function(require,module,exports){
 'use strict';
@@ -1175,24 +1172,29 @@ exports.createStage = function(){
 	light.shadowDarkness = 0.7;
 	scene.add(light);
 
-	//grid helper
-	gridHelper = new THREE.GridHelper( size, step );	
-	//gridHelper.position = new THREE.Vector3( 5, -1, 0 );
-	scene.add(gridHelper);
-	
 	//geometry
 	geometry = new THREE.TorusGeometry(20, 10, 120, 120);
 	material = new THREE.MeshNormalMaterial( );
 	torus = new THREE.Mesh( geometry, material );
 	
-	//why is torus appearing to left of screen instead of middle?
-	//torus.position.set(100, 3, 0); 
-	torus.position.set(0, 25, 0); 
-	//moved from (2,2,0) to position items behind camera. This is a hack 
+	torus.position.set(100, 100, 0); 
+
 	//combined with the alpha position to prevent the kalman filter breaking
-	torus.rotation.y += 120;
+	torus.rotation.y += 50;
+
+
+	var sphereGeom = new THREE.SphereGeometry( 25, 25, 25 );
+	var sphere = new THREE.Mesh( sphereGeom, material );
+	sphere.position.set(-100, 100, 0)
 
 	scene.add(torus);
+	scene.add(sphere);
+
+	var cubeGeometry = new THREE.BoxGeometry( 300, 300, 300, 5, 5, 5 );
+	var material = new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} );
+	var cube = new THREE.Mesh( cubeGeometry, material );
+	cube.position.set(0, 100, 0);
+	scene.add( cube );
 
 	//TODO ES6: Return fully populated object here, instead of above, will save chars
 	stageObjects = {
