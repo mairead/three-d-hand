@@ -1106,7 +1106,7 @@ exports.createStage = function(){
 	var stageObjects = {}; 
 
 	//TODO ES6: Declare vars as let further down where they are used
-	var container;// = document.querySelector(viewport); 
+	var container;
 	var light; 
 	var torus;
 	var geometry; 
@@ -1122,7 +1122,6 @@ exports.createStage = function(){
 	container = document.createElement( 'div' );
 	document.body.appendChild( container );
 	
-	//why is it only occupying half the screen? is this the aspect?
 	var WIDTH = window.innerWidth; 
 	var HEIGHT = window.innerHeight;
 
@@ -1142,7 +1141,6 @@ exports.createStage = function(){
 	container.appendChild(renderer.domElement);
 	
 	effect = new THREE.StereoEffect( renderer );
-	//effect = renderer;
 	
 	effect.setSize(WIDTH, HEIGHT);
 	//nb: can we change separation to calibrate for users
@@ -1151,7 +1149,6 @@ exports.createStage = function(){
 	//camera
 	camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	camera.rotation.order = 'YZX';
-	//camera.position.fromArray([0, 160, 400]);
 	camera.position.set(100, 10, VIEW_ANGLE); //was 60, 10, VIEW_ANGLE
 	camera.lookAt( scene.position );
 
@@ -1181,7 +1178,6 @@ exports.createStage = function(){
 
 	//combined with the alpha position to prevent the kalman filter breaking
 	torus.rotation.y += 50;
-
 
 	var sphereGeom = new THREE.SphereGeometry( 25, 25, 25 );
 	var sphere = new THREE.Mesh( sphereGeom, material );
