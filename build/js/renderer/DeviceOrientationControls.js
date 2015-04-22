@@ -13,6 +13,7 @@ THREE.DeviceOrientationControls = function ( object ) {
 	this.object.rotation.reorder( "YXZ" );
 
 	this.enabled = true;
+	this.startFlag = true;
 
 	this.deviceOrientation = {};
 	this.screenOrientation = 0;
@@ -77,7 +78,6 @@ THREE.DeviceOrientationControls = function ( object ) {
 
 	this.update = function () {
 
-
 		if ( scope.enabled === false ) return;
 
 		//$(".originals").html("ORI: alpha: " + scope.deviceOrientation.alpha.toFixed(6) + ",  beta " + scope.deviceOrientation.beta.toFixed(6) + ", gamma: " + scope.deviceOrientation.gamma.toFixed(6));
@@ -87,30 +87,37 @@ THREE.DeviceOrientationControls = function ( object ) {
 		var gamma  = scope.deviceOrientation.gamma ? THREE.Math.degToRad( scope.deviceOrientation.gamma ) : 0; // Y''
 		var orient = scope.screenOrientation       ? THREE.Math.degToRad( scope.screenOrientation       ) : 0; // O
 
-		// if(flag === 0){
-		// 	console.log(alpha, beta, gamma)
-		// 	flag = 1;			
-		// }
-
 		//$(".accelerometer").html("RAD: alpha: " + alpha.toFixed(6) + ", beta: " + beta.toFixed(6) + ", gamma: " + gamma.toFixed(6) );
 
-
-		//console.log("pre", alpha, beta, gamma);
-		KO.z_k = $V([alpha, beta, gamma]); 
-		KM.update(KO);
-
+		// KO.z_k = $V([alpha, beta, gamma]); 
+		// KM.update(KO);
 		//kalman filtered values to smooth interpolation from accelerometer
 		// alpha = KM.x_k.elements[0];
 		// beta = KM.x_k.elements[1];
 		// gamma = KM.x_k.elements[2];
 
-		//$(".kalman").html("KAL: alpha: " + alpha.toFixed(6) + ", beta: " + beta.toFixed(6) + ", gamma: " + gamma.toFixed(6) );
+		//add low pass filter
 
+		//set initial values under startFlag to match orientation at beginning
+		if(startFlag){
+			scope.smoothedAlpha = THREE.Math.degToRad( scope.deviceOrientation.alpha );
+			scope.smoothedBeta = THREE.Math.degToRad( scope.deviceOrientation.beta );
+			scope.smoothedGamma = THREE.Math.degToRad( scope.deviceOrientation.gamma );
+			startFlag = false;
+		}
 
-		//confusion in the alpha channel
-		//console.log("pos", alpha, beta, gamma);
+		var smoothing = 15; // or whatever is desired
+
+		scope.smoothedAlpha += (alpha - scope.smoothedAlpha) / smoothing;
+		scope.smoothedBeta += (beta - scope.smoothedBeta) / smoothing;
+		scope.smoothedGamma += (gamma - scope.smoothedGamma) / smoothing;
+
+		alpha = scope.smoothedAlpha;
+		beta = scope.smoothedBeta;
+		gamma = scope.smoothedGamma;
+
+		//$(".filter").html("FIL: alpha: " + alpha.toFixed(6) + ", beta: " + beta.toFixed(6) + ", gamma: " + gamma.toFixed(6) );
 		setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
-
 	};
 	this.connect();
 };

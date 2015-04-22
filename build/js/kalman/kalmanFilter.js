@@ -18,8 +18,6 @@ function getDeviceRotation(e){
 //Need to force accelerometer to initialise before retrieving initial values
 var KM, KO;
 
-setTimeout(function(){
-
 
 
 // //These are being set to 0
@@ -34,7 +32,7 @@ setTimeout(function(){
 //   return vals;
 // }
 
-console.log([alpha, beta, gamma]);
+//console.log([alpha, beta, gamma]);
 //var x_0 = $V([2.5,-0.01,-1.5]); //vector. Initial accelerometer values.
 var x_0 = $V([alpha, beta, gamma]); //vector. Initial accelerometer values.
 //These are the base values when the device is held up straight
@@ -58,7 +56,7 @@ var Q_k = $M([
 
 KM = new KalmanModel(x_0,P_0,F_k,Q_k);
 
-console.log([alpha, beta, gamma]);
+//console.log([alpha, beta, gamma]);
 var z_k = $V([alpha, beta, gamma]);
 // var z_k = $V(getNewAccelerometerVals());  
 
@@ -75,5 +73,3 @@ var R_k = $M([
               [0,0,0.005]
             ]); //2x Scalar matrix. Describes noise from sensor.
 KO = new KalmanObservation(z_k,H_k,R_k);
-
-},600);

@@ -269,7 +269,7 @@
     };
     scope.peer.on('open', function(id) {
       console.log("Peer ID received: " + id);
-      document.getElementById("networkId").innerHTML = id;
+      //document.getElementById("networkId").innerHTML = id;
       frameSplicer = new FrameSplicer(_this, id, scope);
       return setTimeout(function() {
         console.log("kick off frameloop after connection");
