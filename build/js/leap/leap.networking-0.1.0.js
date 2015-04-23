@@ -180,6 +180,7 @@
         remoteFrame = _ref[userId];
 
         //TODO: The extra + 5000 is a dirty hack to force it work on mobile
+        //Why is frame sentAt so long before?
         if ((new Date).getTime() > (remoteFrame.sentAt + this.options.frozenHandTimeout + 5000)) {
           // console.log("data getting deleted from add remote?")
           // console.log("datetime", (new Date).getTime())
