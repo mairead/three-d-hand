@@ -181,7 +181,7 @@
 
         //TODO: The extra + 5000 is a dirty hack to force it work on mobile
         //Why is frame sentAt so long before?
-        if ((new Date).getTime() > (remoteFrame.sentAt + this.options.frozenHandTimeout + 5000)) {
+        if ((new Date).getTime() > (remoteFrame.sentAt + this.options.frozenHandTimeout + 5500)) {
           // console.log("data getting deleted from add remote?")
           // console.log("datetime", (new Date).getTime())
           // console.log("frame sent at", remoteFrame.sentAt )
@@ -239,7 +239,7 @@
     scope.connection = null;
     scope.sendFrames = false;
     scope.maxSendRate = 60;
-    scope.frozenHandTimeout = 250;
+    scope.frozenHandTimeout = 2500;
     frameSplicer = null;
     scope.framePacker = framePacker = new FramePacker;
     scope.peer.on('error', function(error) {

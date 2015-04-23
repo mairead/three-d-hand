@@ -75,19 +75,19 @@ exports.createStage = function(){
 	material = new THREE.MeshNormalMaterial( );
 	torus = new THREE.Mesh( geometry, material );
 	
-	torus.position.set(100, 100, 0); 
+	torus.position.set(100, 200, 0); 
 
 	//combined with the alpha position to prevent the kalman filter breaking
 	torus.rotation.y += 50;
 
 	var sphereGeom = new THREE.SphereGeometry( 25, 25, 25 );
 	var sphere = new THREE.Mesh( sphereGeom, material );
-	sphere.position.set(-100, 100, 0)
+	sphere.position.set(-100, 200, 0)
 
 	scene.add(torus);
 	scene.add(sphere);
 
-	var cubeGeometry = new THREE.BoxGeometry( 400, 400, 400, 5, 5, 5 );
+	var cubeGeometry = new THREE.BoxGeometry( 300, 300, 300, 5, 5, 5 );
 	var wireMaterial = new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} );
 
 	// materials
@@ -102,7 +102,7 @@ exports.createStage = function(){
 
 	//var cube = new THREE.Mesh( cubeGeometry, wireMaterial );
 	var cube = new THREE.Mesh( cubeGeometry, new THREE.MeshFaceMaterial( materials ) );
-	cube.position.set(0, 100, 0);
+	cube.position.set(0, 200, 0);
 	scene.add( cube );
 
 	//TODO ES6: Return fully populated object here, instead of above, will save chars

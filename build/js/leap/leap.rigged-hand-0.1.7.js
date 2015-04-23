@@ -349,7 +349,7 @@ function onReady(handler) {
     this.scene.add(pointLight);
     this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
     // this.camera.position.fromArray([0, 160, 400]);
-    this.camera.position.fromArray([0, 160, 250])
+    this.camera.position.fromArray([0, 200, 350])
 
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
     //create controls after camera is created
