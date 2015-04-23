@@ -1187,8 +1187,20 @@ exports.createStage = function(){
 	scene.add(sphere);
 
 	var cubeGeometry = new THREE.BoxGeometry( 400, 400, 400, 5, 5, 5 );
-	var material = new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} );
-	var cube = new THREE.Mesh( cubeGeometry, material );
+	var wireMaterial = new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} );
+
+	// materials
+	var materials = [
+  	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} ),
+  	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} ),
+  	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} ),
+  	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} ),
+  	new THREE.MeshBasicMaterial( { color: 0xffffff, transparent: true, opacity: 0.0 } ), //hides face nearest to user
+  	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} )
+	];
+
+	//var cube = new THREE.Mesh( cubeGeometry, wireMaterial );
+	var cube = new THREE.Mesh( cubeGeometry, new THREE.MeshFaceMaterial( materials ) );
 	cube.position.set(0, 100, 0);
 	scene.add( cube );
 
