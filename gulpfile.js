@@ -154,7 +154,8 @@ var tasks = {
         './src/js/**/*.js',
         './tests/**/*.js',
         '!./src/js/vendor/*.js',
-        '!./src/js/leap/*.js'
+        '!./src/js/leap/*.js',
+        '!./src/js/kalman/*.js'
       ]).pipe(jshint())
       .pipe(jshint.reporter(stylish))
       .on('error', handleError('lint'));

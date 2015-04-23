@@ -87,7 +87,7 @@ exports.createStage = function(){
 	scene.add(torus);
 	scene.add(sphere);
 
-	var cubeGeometry = new THREE.BoxGeometry( 300, 300, 300, 5, 5, 5 );
+	var cubeGeometry = new THREE.BoxGeometry( 400, 400, 400, 5, 5, 5 );
 	var material = new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} );
 	var cube = new THREE.Mesh( cubeGeometry, material );
 	cube.position.set(0, 100, 0);

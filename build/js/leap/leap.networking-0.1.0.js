@@ -60,12 +60,10 @@
     };
 
     FramePacker.prototype.unpack = function(frameData) {
-      //console.log("unpack frame data")
       return this.unpackData(this.packingStructure, frameData);
     };
 
     FramePacker.prototype.unpackData = function(structure, data) {
-      //console.log("unpacker called?")
       var datum, i, key, nameOrHash, out, subArray, _i, _j, _len, _len1;
       out = {};
       for (i = _i = 0, _len = structure.length; _i < _len; i = ++_i) {
@@ -100,12 +98,10 @@
       this.controller = controller;
       this.options = options;
       this.remoteFrames = {};
+      //console.log("remote frame object getting created in framesplicer object")
       console.assert(this.userId);
       frameSplicer = this;
-      //console.log("frame splicer obj", this)
       this.remoteFrameLoop = function() {
-        //console.log("this when called by requestAnimationFrame", this)
-        //console.log("framespliver called by requestAnimationFrame", this)
         var frame, frameData;
         // replace this with object 
         if (frameSplicer.controller.streaming()) {
@@ -122,7 +118,6 @@
         // replace this with object 
         frameSplicer.controller.processFrame(frame);
         //this.controller.processFrame(frame);
-        //console.log('value of frameSplicer ',frameSplicer)
         return window.requestAnimationFrame(frameSplicer.remoteFrameLoop);
       };
     }
@@ -148,9 +143,9 @@
     };
 
     FrameSplicer.prototype.receiveRemoteFrame = function(userId, frameData) {
-      //console.log("receive remote",userId, frameData)
       var previousFrameData;
       previousFrameData = this.remoteFrames[userId];
+      //console.log("receiving remote frame data", this.remoteFrames[userId])
       if (previousFrameData && (previousFrameData.timestamp > frameData.timestamp)) {
         return;
       }
@@ -177,13 +172,19 @@
     };
 
     FrameSplicer.prototype.addRemoteFrameData = function(frameData) {
-      //console.log("add data ?", frameData)
       var hand, pointable, remoteFrame, userId, _i, _len, _ref, _ref1, _results;
       _ref = this.remoteFrames;
+      //console.log("add remote remote frames value?", this.remoteFrames)
       _results = [];
       for (userId in _ref) {
         remoteFrame = _ref[userId];
-        if ((new Date).getTime() > (remoteFrame.sentAt + this.options.frozenHandTimeout)) {
+
+        //TODO: The extra + 5000 is a dirty hack to force it work on mobile
+        if ((new Date).getTime() > (remoteFrame.sentAt + this.options.frozenHandTimeout + 5000)) {
+          // console.log("data getting deleted from add remote?")
+          // console.log("datetime", (new Date).getTime())
+          // console.log("frame sent at", remoteFrame.sentAt )
+          // console.log("this.options.frozenHandTimeout", this.options.frozenHandTimeout)
           delete this.remoteFrames[userId];
           break;
         }
@@ -256,12 +257,9 @@
     };
     scope.connectionEstablished = function() {
       scope.sendFrames = true;
-      //console.log("established?")
       return scope.connection.on('data', function(data) {
         var frameData;
-        //console.log("connection data event?")
         if (data.frameData) {
-          //console.log(data.frameData)
           frameData = framePacker.unpack(data.frameData);
           return frameSplicer.receiveRemoteFrame(scope.connection.peer, frameData);
         }
@@ -269,10 +267,9 @@
     };
     scope.peer.on('open', function(id) {
       console.log("Peer ID received: " + id);
-      //document.getElementById("networkId").innerHTML = id;
       frameSplicer = new FrameSplicer(_this, id, scope);
       return setTimeout(function() {
-        console.log("kick off frameloop after connection");
+        
         return frameSplicer.remoteFrameLoop();
       }, 1000);
     });

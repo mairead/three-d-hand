@@ -1,3 +1,4 @@
+'use strict';
 /**
  * @author richt / http://richt.me
  * @author WestLangley / http://github.com/WestLangley
@@ -6,14 +7,13 @@
  */
 
 THREE.DeviceOrientationControls = function ( object ) {
-	var flag = 0;
 	var scope = this;
 
 	this.object = object;
 	this.object.rotation.reorder( "YXZ" );
 
 	this.enabled = true;
-	this.startFlag = true;
+	var startFlag = true;
 
 	this.deviceOrientation = {};
 	this.screenOrientation = 0;
@@ -52,7 +52,7 @@ THREE.DeviceOrientationControls = function ( object ) {
 
 			quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) );    // adjust for screen orientation
 
-		}
+		};
 
 	}();
 
@@ -78,7 +78,9 @@ THREE.DeviceOrientationControls = function ( object ) {
 
 	this.update = function () {
 
-		if ( scope.enabled === false ) return;
+		if ( scope.enabled === false ){
+			return;
+		} 
 
 		//$(".originals").html("ORI: alpha: " + scope.deviceOrientation.alpha.toFixed(6) + ",  beta " + scope.deviceOrientation.beta.toFixed(6) + ", gamma: " + scope.deviceOrientation.gamma.toFixed(6));
 
@@ -88,13 +90,6 @@ THREE.DeviceOrientationControls = function ( object ) {
 		var orient = scope.screenOrientation       ? THREE.Math.degToRad( scope.screenOrientation       ) : 0; // O
 
 		//$(".accelerometer").html("RAD: alpha: " + alpha.toFixed(6) + ", beta: " + beta.toFixed(6) + ", gamma: " + gamma.toFixed(6) );
-
-		// KO.z_k = $V([alpha, beta, gamma]); 
-		// KM.update(KO);
-		//kalman filtered values to smooth interpolation from accelerometer
-		// alpha = KM.x_k.elements[0];
-		// beta = KM.x_k.elements[1];
-		// gamma = KM.x_k.elements[2];
 
 		//add low pass filter
 
@@ -106,7 +101,7 @@ THREE.DeviceOrientationControls = function ( object ) {
 			startFlag = false;
 		}
 
-		var smoothing = 15; // or whatever is desired
+		var smoothing = 25; // or whatever is desired
 
 		scope.smoothedAlpha += (alpha - scope.smoothedAlpha) / smoothing;
 		scope.smoothedBeta += (beta - scope.smoothedBeta) / smoothing;
@@ -121,11 +116,3 @@ THREE.DeviceOrientationControls = function ( object ) {
 	};
 	this.connect();
 };
-
-
-
-	
-
-
-
-

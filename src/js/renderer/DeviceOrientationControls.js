@@ -1,3 +1,4 @@
+'use strict';
 /**
  * @author richt / http://richt.me
  * @author WestLangley / http://github.com/WestLangley
@@ -5,15 +6,14 @@
  * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
  */
 
-
 THREE.DeviceOrientationControls = function ( object ) {
-
 	var scope = this;
 
 	this.object = object;
 	this.object.rotation.reorder( "YXZ" );
 
 	this.enabled = true;
+	var startFlag = true;
 
 	this.deviceOrientation = {};
 	this.screenOrientation = 0;
@@ -52,7 +52,7 @@ THREE.DeviceOrientationControls = function ( object ) {
 
 			quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) );    // adjust for screen orientation
 
-		}
+		};
 
 	}();
 
@@ -78,35 +78,41 @@ THREE.DeviceOrientationControls = function ( object ) {
 
 	this.update = function () {
 
-		if ( scope.enabled === false ) return;
+		if ( scope.enabled === false ){
+			return;
+		} 
+
+		//$(".originals").html("ORI: alpha: " + scope.deviceOrientation.alpha.toFixed(6) + ",  beta " + scope.deviceOrientation.beta.toFixed(6) + ", gamma: " + scope.deviceOrientation.gamma.toFixed(6));
 
 		var alpha  = scope.deviceOrientation.alpha ? THREE.Math.degToRad( scope.deviceOrientation.alpha ) : 0; // Z
 		var beta   = scope.deviceOrientation.beta  ? THREE.Math.degToRad( scope.deviceOrientation.beta  ) : 0; // X'
 		var gamma  = scope.deviceOrientation.gamma ? THREE.Math.degToRad( scope.deviceOrientation.gamma ) : 0; // Y''
 		var orient = scope.screenOrientation       ? THREE.Math.degToRad( scope.screenOrientation       ) : 0; // O
 
-		console.log("pre", alpha, beta, gamma);
-		KO.z_k = $V([alpha, beta, gamma]); 
-		KM.update(KO);
+		//$(".accelerometer").html("RAD: alpha: " + alpha.toFixed(6) + ", beta: " + beta.toFixed(6) + ", gamma: " + gamma.toFixed(6) );
 
-		//kalman filtered values to smooth interpolation from accelerometer
-		alpha = KM.x_k.elements[0];
-		beta = KM.x_k.elements[1];
-		gamma = KM.x_k.elements[2];
+		//add low pass filter
 
-		console.log("pos", alpha, beta, gamma);
+		//set initial values under startFlag to match orientation at beginning
+		if(startFlag){
+			scope.smoothedAlpha = THREE.Math.degToRad( scope.deviceOrientation.alpha );
+			scope.smoothedBeta = THREE.Math.degToRad( scope.deviceOrientation.beta );
+			scope.smoothedGamma = THREE.Math.degToRad( scope.deviceOrientation.gamma );
+			startFlag = false;
+		}
+
+		var smoothing = 25; // or whatever is desired
+
+		scope.smoothedAlpha += (alpha - scope.smoothedAlpha) / smoothing;
+		scope.smoothedBeta += (beta - scope.smoothedBeta) / smoothing;
+		scope.smoothedGamma += (gamma - scope.smoothedGamma) / smoothing;
+
+		alpha = scope.smoothedAlpha;
+		beta = scope.smoothedBeta;
+		gamma = scope.smoothedGamma;
+
+		//$(".filter").html("FIL: alpha: " + alpha.toFixed(6) + ", beta: " + beta.toFixed(6) + ", gamma: " + gamma.toFixed(6) );
 		setObjectQuaternion( scope.object.quaternion, alpha, beta, gamma, orient );
-
 	};
-
 	this.connect();
-
 };
-
-
-
-	
-
-
-
-
