@@ -1195,7 +1195,7 @@ exports.createStage = function(){
   	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} ),
   	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} ),
   	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} ),
-  	new THREE.MeshBasicMaterial( { color: 0xffffff, transparent: true, opacity: 0.0 } ), //hides face nearest to user
+  	new THREE.MeshBasicMaterial( {color: 0xffffff, transparent: true, opacity: 0.0 } ), //hides face nearest to user
   	new THREE.MeshBasicMaterial( {color: 0xEEEEEE, wireframe: true} )
 	];
 
